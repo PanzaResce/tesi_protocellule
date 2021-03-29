@@ -36,4 +36,7 @@ class reazione:
             self.reagenti = [reazione[0], reazione[1], reazione[2]]
             self.prodotti = [reazione[3], reazione[4]]
             self.costante = float(reazione[5])
-        # elif self.tipo == 210:
+        elif self.tipo == 210:
+            self.reagenti = [reazione[0]]
+            self.prodotti = [reazione[1]]
+            self.costante = float(reazione[2])

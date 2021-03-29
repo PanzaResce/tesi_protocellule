@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
+from math import pi
 from sample.specie import specie
 from sample.reazione import reazione
 
@@ -25,7 +26,13 @@ class proto:
             riga = f.readline()
             self.n_reazioni = int(riga.split()[1])
 
-            f.readline()   #riga vuota
+            riga = f.readline()
+            self.radius = float(riga.split()[1])
+
+            riga = f.readline()
+            self.membrane_thickness = float(riga.split()[1])
+
+            f.readline()    #riga vuota
 
             # Lettura specie --> nome, quantità, ...
             for i in range(self.n_specie):
@@ -41,7 +48,7 @@ class proto:
                 riga = f.readline()
 
                 tipo = riga.split()[0]
-                vett_reazione = [el for el in riga.split()[1:] if el not in ("+", ">", ";")]
+                vett_reazione = [el for el in riga.split()[1:] if el not in ("+", ">", ";", "/")]
 
                 self.reazioni.append(reazione(tipo, vett_reazione))
 
@@ -114,8 +121,12 @@ class proto:
                 delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
                 delta[self.specie.index(self.reazioni[i].reagenti[1])] -= flusso
                 delta[self.specie.index(self.reazioni[i].reagenti[2])] -= flusso
+                delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[1])] += flusso
-                delta[self.specie.index(self.reazioni[i].prodotti[2])] += flusso
+            elif self.reazioni[i].tipo == 210:
+                flusso = ((pow(36*pi, 1/3) * self.reazioni[i].costante) / self.membrane_thickness) * (specie[self.specie.index(self.reazioni[i].reagenti[0])] - specie[self.specie.index(self.reazioni[i].prodotti[0])]) / pow(4/3*pi*pow(self.radius, 3), 1/3)
+                delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
+                delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
             else:
                 print("ALLARME FN: ", self.reazioni[i].tipo)
                 exit()
