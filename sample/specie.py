@@ -9,16 +9,16 @@ class specie:
 
         if inter is not None:
             self.inter = {
-                "bufferizzata": False,
-                "boundary": False
+                "bufferizzata": 0,
+                "boundary": 0
             }
 
             if len(inter) != len(self.inter.keys()):
-                raise LengthError(f"The interaction must be {len(self.inter.keys())}")
+                raise AttributeError(f"Wrong format, the interaction must be {len(self.inter.keys())}")
 
             if isinstance(inter, list):
                 for index, key in enumerate(self.inter.keys()):
-                    self.inter[key] = bool(int(inter[index]))
+                    self.inter[key] = int(inter[index])
             else:
                 self.inter = inter
 
