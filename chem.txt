@@ -1,5 +1,8 @@
 num_specie	4
 num_reac	5
+memb_thick	1e-08	//spessore membrana in metri
+cont_rad		1e-06	//raggio iniziale contenitore sferico in metri
+density		2635.778 //densita molecolare contenitore in mol/m^3
 
 A	0.01	0	0
 B	0.01	0	0
