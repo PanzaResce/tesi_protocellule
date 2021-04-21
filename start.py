@@ -1,4 +1,4 @@
-from sample.proto import proto
+from protocellule.proto import proto
 
 if __name__ == "__main__":
     file = input("Inserisci nome file(file.txt): ")

@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 from math import pi
-from sample.specie import specie
-from sample.reazione import reazione
+from protocellule.specie import specie
+from protocellule.reazione import reazione
 
 
 class proto:
