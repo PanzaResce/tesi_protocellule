@@ -3,6 +3,7 @@ from scipy.integrate import solve_ivp
 from math import pi
 from protocellule.specie import specie
 from protocellule.reazione import reazione
+from protocellule.reazione import reazione
 
 
 class proto:
@@ -14,7 +15,7 @@ class proto:
 
         self.specie = list()
         self.reazioni = list()
-        self.history = list()
+        self.history = dict()
 
         self.conf_file = conf_file
         self.chem_file = chem_file
@@ -44,7 +45,7 @@ class proto:
 
             f.readline()    #riga vuota
 
-            # Lettura specie --> nome, quantità, ...
+            # Lettura specie --> nome, quantità, proprietà
             for i in range(self.n_specie):
                 riga = f.readline()
                 s = specie(riga.split()[0], riga.split()[1], riga.split()[2:])
@@ -63,33 +64,35 @@ class proto:
                 self.reazioni.append(reazione(tipo, vett_reazione))
 
     def simula(self):
-        (x0, xn, n) = proto.read_conf(self.conf_file)
+        (x0, xn, n, n_div) = proto.read_conf(self.conf_file)
 
         t_span = [x0, xn]
 
         y0 = [s.qnt for s in self.specie]
         y0.append(self.contenitore)
 
-        sol1 = solve_ivp(self.fn, t_span, y0, events=self.terminate)
+        for i in range(n_div):
+            sol1 = solve_ivp(self.fn, t_span, y0, events=self.terminate)
+
+            n_step = sol1.y.shape[1]
+            out = [s[n_step - 1] for s in sol1.y]
+
+            self.duplicate(out[-1])
+
+            out[-1] = self.contenitore
+            y0 = out
+
+            self.fill_history(sol1.t, sol1.y)
+            # self.history.append({sol1.t[idx]: [s[idx] for s in sol1.y] for idx in range(n_step)})
 
         n_step = sol1.y.shape[1]
         out = [s[n_step - 1] for s in sol1.y]
-        #self.rk4()
 
         print("---FINALE---")
         print(f"Vettore finale: {out}")
         print(f"Tempo: {sol1.t[-1]}")
 
-        self.history = {sol1.t[i]: [s[i] for s in sol1.y] for i in range(n_step)}
-
-        # x = range(n_step)
-        # plt.plot(x, [x for x in self.history[0]], label="A")
-        # plt.plot(x, [x for x in self.history[1]], label="B")
-        # plt.plot(x, [x for x in self.history[2]], label="C")
-        # plt.plot(x, [x for x in self.history[3]], label="*Compl")
-        #
-        # plt.legend()
-        # plt.show()
+        #self.history = {sol1.t[i]: [s[i] for s in sol1.y] for i in range(n_step)}
 
         print(n_step)
 
@@ -102,7 +105,7 @@ class proto:
 
         if t != 0:
             # calcolo nuovo volume con nuova quantità
-            new_volume = (1000/6)*pi*pow(self.membrane_thickness, 3)*pow(pow((specie[-1]/(self.density*pi*pow(self.membrane_thickness, 3)))-1/3, 1/2)-1, 3)
+            new_volume = self.calc_volume(specie[-1])
             v_rapp = self.volume / new_volume
 
             # aggiusto concentrazioni sostanze con rapporto volume vecchio / volume nuovo
@@ -168,20 +171,30 @@ class proto:
 
         return delta
 
-    def fill_history(self, vett):
-        self.history.append(proto.copy(vett))
+    def duplicate(self, lipidi):
+        """Effettua la duplicazione basandosi sulla quantità di lipide passata"""
+        self.contenitore = lipidi/2
+        self.volume = self.calc_volume(self.contenitore)
+
+    def fill_history(self, t, y):
+        n_step = y.shape[1]
+        try:
+            t_offset = list(self.history.keys())[-1]
+        except IndexError:
+            t_offset = 0
+        self.history.update({t[idx]+t_offset: [s[idx] for s in y] for idx in range(n_step)})
 
     def print_to_file(self, sec=None):
         file = self.chem_file.split(".")[0] + "_out.txt"
         with open(file, "w") as f:
-            l = [el.nome for el in self.specie]
-            f.write("Time\t"+str(l).replace(",", "\t").replace("[","").replace("]","").replace("'", "")+"\tLipide"+"\n")
-
             for t, l in self.history.items():
                 f.write(str(t)+"\t"+str(l).replace(",", "\t").replace("[","").replace("]","").replace("'", "")+"\n")
+            # for div in self.history:
+            #     for t, l in div.items():
+            #         f.write(str(t) + "\t" + str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "") + "\n")
+            #     f.write("---DIVISIONE---"+"\n")
 
     def print_graph(self, sec=None):
-
         x = list(self.history.keys())
 
         for s in self.specie:
@@ -192,15 +205,14 @@ class proto:
         plt.show()
 
     def terminate(self, t, y):
-        # termina quando [C] * volume_proto > Cmax
-        # print(self.conf_file)
-        # print(t)
+        """Condizione di terminazione --> quando la quantità di lipide è raddoppiata"""
         if y[-1]/self.contenitore >= 2.0:
-            print(f"tempo finale: {t}")
-            print(f"Vetttore finele: {y}")
             return 0
         return 1
     terminate.terminal = True
+
+    def calc_volume(self, lipidi):
+        return (1000 / 6) * pi * pow(self.membrane_thickness, 3) * pow(pow((lipidi / (self.density * pi * pow(self.membrane_thickness, 3))) - 1 / 3, 1 / 2) - 1, 3)
 
     @staticmethod
     def read_conf(conf_file):
@@ -211,8 +223,9 @@ class proto:
             x0 = int(riga.split()[0])
             xn = int(riga.split()[1])
             n = int(riga.split()[2])
+            n_div = int(riga.split()[3])
 
-            return x0, xn, n
+            return x0, xn, n, n_div
 
     @staticmethod
     def pr_sc_vett(sc, vett):

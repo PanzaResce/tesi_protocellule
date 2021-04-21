@@ -1,2 +1,2 @@
-t0	tn	steps
-0	200	10000
+t0	tn	steps	n_divisioni
+0	50	10000	6

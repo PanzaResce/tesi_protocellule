@@ -9,8 +9,8 @@ class specie:
 
         if inter is not None:
             self.inter = {
-                "bufferizzata": 0,
-                "boundary": 0
+                "bufferizzata": 0.0,
+                "boundary": 0.0
             }
 
             if len(inter) != len(self.inter.keys()):
@@ -18,7 +18,7 @@ class specie:
 
             if isinstance(inter, list):
                 for index, key in enumerate(self.inter.keys()):
-                    self.inter[key] = int(inter[index])
+                    self.inter[key] = float(inter[index])
             else:
                 self.inter = inter
 
