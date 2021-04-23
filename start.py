@@ -6,4 +6,5 @@ if __name__ == "__main__":
     # p = proto()
     p.simula()
     p.print_to_file()
+    p.print_division_file()
     p.print_graph()

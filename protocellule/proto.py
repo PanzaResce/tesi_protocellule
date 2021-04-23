@@ -83,7 +83,6 @@ class proto:
             y0 = out
 
             self.fill_history(sol1.t, sol1.y)
-            # self.history.append({sol1.t[idx]: [s[idx] for s in sol1.y] for idx in range(n_step)})
 
         n_step = sol1.y.shape[1]
         out = [s[n_step - 1] for s in sol1.y]
@@ -91,8 +90,6 @@ class proto:
         print("---FINALE---")
         print(f"Vettore finale: {out}")
         print(f"Tempo: {sol1.t[-1]}")
-
-        #self.history = {sol1.t[i]: [s[i] for s in sol1.y] for i in range(n_step)}
 
         print(n_step)
 
@@ -184,17 +181,28 @@ class proto:
             t_offset = 0
         self.history.update({t[idx]+t_offset: [s[idx] for s in y] for idx in range(n_step)})
 
-    def print_to_file(self, sec=None):
+    def print_to_file(self):
         file = self.chem_file.split(".")[0] + "_out.txt"
         with open(file, "w") as f:
             for t, l in self.history.items():
-                f.write(str(t)+"\t"+str(l).replace(",", "\t").replace("[","").replace("]","").replace("'", "")+"\n")
-            # for div in self.history:
-            #     for t, l in div.items():
-            #         f.write(str(t) + "\t" + str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "") + "\n")
-            #     f.write("---DIVISIONE---"+"\n")
+                f.write(str(t)+"\t"+str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "")+"\n")
 
-    def print_graph(self, sec=None):
+    def print_division_file(self):
+        file = self.chem_file.split(".")[0] + "_division.txt"
+        t_prev_div = 0
+        with open(file, "w") as f:
+            l = list(self.history.items())
+            for i in range(len(l)):
+                if i != len(l) - 1:
+                    if l[i][-1][-1] / l[i + 1][-1][-1] > 1.9:
+                        t_elapsed = l[i][0] - t_prev_div
+                        f.write(str(l[i][0]) + "\t" + str(t_elapsed) + "\t" + str(l[i][1]).replace(",", "\t").replace("(", "").replace(")", "").replace("'", "").replace("[", "").replace("]", "")+"\n")
+                        t_prev_div = l[i][0]
+                else:
+                    t_elapsed = l[i][0] - t_prev_div
+                    f.write(str(l[i][0]) + "\t" + str(t_elapsed) + "\t" + str(l[i][1]).replace(",", "\t").replace("(", "").replace(")", "").replace("'", "").replace("[", "").replace("]", "") + "\n")
+
+    def print_graph(self):
         x = list(self.history.keys())
 
         for s in self.specie:
