@@ -3,11 +3,10 @@ from scipy.integrate import solve_ivp
 from math import pi
 from protocellule.specie import specie
 from protocellule.reazione import reazione
-from protocellule.reazione import reazione
 
 
 class proto:
-    """ Per come è concepita al momento la classe proto, tutte
+    """ Per come è concepita la classe proto, tutte
         le informazioni che vengono memorizzate rappresentanto
         lo stato iniziale della cellula """
 
@@ -16,12 +15,13 @@ class proto:
         self.specie = list()
         self.reazioni = list()
         self.history = dict()
+        self.flow_history = list()
 
         self.conf_file = conf_file
         self.chem_file = chem_file
 
         with open(chem_file) as f:
-            #Lettura proprietà cellula
+            # Lettura proprietà cellula
             riga = f.readline()
             self.n_specie = int(riga.split()[1])
 
@@ -84,14 +84,7 @@ class proto:
 
             self.fill_history(sol1.t, sol1.y)
 
-        n_step = sol1.y.shape[1]
-        out = [s[n_step - 1] for s in sol1.y]
-
-        print("---FINALE---")
-        print(f"Vettore finale: {out}")
-        print(f"Tempo: {sol1.t[-1]}")
-
-        print(n_step)
+        print("END")
 
     def fn(self, t, specie):
         """ Restituisce un vettore che indica le nuove
@@ -101,11 +94,11 @@ class proto:
         dC = sum([s.inter["boundary"] * specie[self.specie.index(s)] for s in self.specie]) * self.volume
 
         if t != 0:
-            # calcolo nuovo volume con nuova quantità
+            # calcolo volume attuale con quantità lipide attuale
             new_volume = self.calc_volume(specie[-1])
             v_rapp = self.volume / new_volume
 
-            # aggiusto concentrazioni sostanze con rapporto volume vecchio / volume nuovo
+            # ricalcolo concentrazioni sostanze con rapporto (volume vecchio / volume nuovo)
             for idx, s in enumerate(specie):
                 if idx != len(specie)-1 and bool(self.specie[idx].inter["bufferizzata"]) is not True:
                     specie[idx] *= v_rapp
@@ -113,8 +106,9 @@ class proto:
             self.volume = new_volume
 
         delta = [0] * len(specie)
+        flow = [0] * len(specie)
 
-        # applico le reazioni (basandomi su vecchio volume)
+        # applico le reazioni
         for i in range(self.n_reazioni):
             if self.reazioni[i].tipo == 12:
                 flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])]
@@ -156,6 +150,8 @@ class proto:
                 flusso = ((pow(36*pi, 1/3) * self.reazioni[i].costante) / self.membrane_thickness) * (specie[self.specie.index(self.reazioni[i].reagenti[0])] - specie[self.specie.index(self.reazioni[i].prodotti[0])]) / pow(self.volume, 1/3)
                 delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
+                # flow serve solo per generare il file dei flussi
+                flow[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
             else:
                 print("ALLARME FN: ", self.reazioni[i].tipo)
                 exit()
@@ -166,11 +162,14 @@ class proto:
 
         delta[-1] = dC
 
+        flow[-1] = self.volume
+        self.flow_history.append({t: flow})
+
         return delta
 
     def duplicate(self, lipidi):
         """Effettua la duplicazione basandosi sulla quantità di lipide passata"""
-        self.contenitore = lipidi/2
+        self.contenitore = lipidi / 2
         self.volume = self.calc_volume(self.contenitore)
 
     def fill_history(self, t, y):
@@ -187,6 +186,32 @@ class proto:
             for t, l in self.history.items():
                 f.write(str(t)+"\t"+str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "")+"\n")
 
+    def print_flow_file(self):
+        hist = list()
+
+        # Calcolo i dt dai tempi assoluti
+        dt = list()
+        t_prev = 0
+        for i in range(len(self.flow_history)):
+            if i != 0:
+                for t, l in self.flow_history[i].items():
+                    dt.append(t - t_prev)
+                    t_prev = t
+
+        # Calcolo la quantità di flusso ---> [flusso] * volume / dt
+        idx = 0
+        for el in self.flow_history:
+            if idx != len(self.flow_history) - 1:
+                if dt[idx] > 0:
+                    hist.append({t: [flux * specie[-1] / dt[idx] for flux in specie if flux != specie[-1]] for t, specie in el.items()})
+                idx += 1
+
+        file = self.chem_file.split(".")[0] + "_flow.txt"
+        with open(file, "w") as f:
+            for el in hist:
+                for t, l in el.items():
+                    f.write(str(t)+"\t"+str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "")+"\n")
+
     def print_division_file(self):
         file = self.chem_file.split(".")[0] + "_division.txt"
         t_prev_div = 0
@@ -194,7 +219,7 @@ class proto:
             l = list(self.history.items())
             for i in range(len(l)):
                 if i != len(l) - 1:
-                    if l[i][-1][-1] / l[i + 1][-1][-1] > 1.9:
+                    if l[i][-1][-1] / l[i + 1][-1][-1] > 1.95:
                         t_elapsed = l[i][0] - t_prev_div
                         f.write(str(l[i][0]) + "\t" + str(t_elapsed) + "\t" + str(l[i][1]).replace(",", "\t").replace("(", "").replace(")", "").replace("'", "").replace("[", "").replace("]", "")+"\n")
                         t_prev_div = l[i][0]
