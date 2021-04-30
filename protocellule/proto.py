@@ -64,7 +64,8 @@ class proto:
                 self.reazioni.append(reazione(tipo, vett_reazione))
 
     def simula(self):
-        (x0, xn, n, n_div) = proto.read_conf(self.conf_file)
+        (x0, xn, n, n_div, div_coeff) = proto.read_conf(self.conf_file)
+        self.div_coeff = div_coeff
 
         t_span = [x0, xn]
 
@@ -239,7 +240,7 @@ class proto:
 
     def terminate(self, t, y):
         """Condizione di terminazione --> quando la quantità di lipide è raddoppiata"""
-        if y[-1]/self.contenitore >= 2.0:
+        if y[-1]/self.contenitore >= self.div_coeff:
             return 0
         return 1
     terminate.terminal = True
@@ -257,8 +258,9 @@ class proto:
             xn = int(riga.split()[1])
             n = int(riga.split()[2])
             n_div = int(riga.split()[3])
+            div_coeff = int(riga.split()[4])
 
-            return x0, xn, n, n_div
+            return x0, xn, n, n_div, div_coeff
 
     @staticmethod
     def pr_sc_vett(sc, vett):

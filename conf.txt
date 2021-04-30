@@ -1,2 +1,2 @@
-t0	tn	steps	n_divisioni
-0	50	10000	6
+t0	tn	steps	n_divisioni	div_coeff
+0	50	10000	6		2
