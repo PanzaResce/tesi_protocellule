@@ -78,9 +78,9 @@ class proto:
             n_step = sol1.y.shape[1]
             out = [s[n_step - 1] for s in sol1.y]
 
-            self.duplicate(out[-1])
+            new_qnt = self.duplicate(out[-1])
 
-            out[-1] = self.contenitore
+            out[-1] = new_qnt
             y0 = out
 
             self.fill_history(sol1.t, sol1.y)
@@ -170,8 +170,9 @@ class proto:
 
     def duplicate(self, lipidi):
         """Effettua la duplicazione basandosi sulla quantità di lipide passata"""
-        self.contenitore = lipidi / 2
-        self.volume = self.calc_volume(self.contenitore)
+        qnt_dup = lipidi / 2
+        self.volume = self.calc_volume(qnt_dup)
+        return qnt_dup
 
     def fill_history(self, t, y):
         n_step = y.shape[1]
