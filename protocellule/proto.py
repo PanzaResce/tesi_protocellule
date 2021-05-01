@@ -61,6 +61,10 @@ class proto:
                 tipo = riga.split()[0]
                 vett_reazione = [el for el in riga.split()[1:] if el not in ("+", ">", ";", "/")]
 
+                # this is for optimization purpose, the part (36pi^1/3 / membrane) is constant through all the program
+                if tipo == "210":
+                    vett_reazione[2] = float(vett_reazione[2]) * pow(36 * pi, 1 / 3) / self.membrane_thickness
+
                 self.reazioni.append(reazione(tipo, vett_reazione))
 
     def simula(self):
@@ -148,7 +152,7 @@ class proto:
                 delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[1])] += flusso
             elif self.reazioni[i].tipo == 210:
-                flusso = ((pow(36*pi, 1/3) * self.reazioni[i].costante) / self.membrane_thickness) * (specie[self.specie.index(self.reazioni[i].reagenti[0])] - specie[self.specie.index(self.reazioni[i].prodotti[0])]) / pow(self.volume, 1/3)
+                flusso = self.reazioni[i].costante * (specie[self.specie.index(self.reazioni[i].reagenti[0])] - specie[self.specie.index(self.reazioni[i].prodotti[0])]) / pow(self.volume, 1/3)
                 delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
                 # flow serve solo per generare il file dei flussi

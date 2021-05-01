@@ -1,18 +1,18 @@
 num_specie	6
 num_reac	5
 memb_thick	1e-08	//spessore membrana in metri
-cont_rad		1e-06	//raggio iniziale contenitore sferico in metri
+cont_rad	1e-06	//raggio iniziale contenitore sferico in metri
 density		2635.778 //densita molecolare contenitore in mol/m^3
 
 Aext	0.05	1	0
 Bext	0.05	1	0
 A	0.01	0	0
 B	0.01	0	0
-C	0.01	0	1
+C	0.01	0	1e-0
 *Compl	0.0	0	0
 
-210     	Aext / A ; 8e-017
-210     	Bext / B ; 8e-017
+210     Aext / A ; 8e-017
+210     Bext / B ; 8e-017
 21	A + C > *Compl ; 2000.0
 12	*Compl > A + C ; 14.86
 22	*Compl + B > C + C ; 1000.0
