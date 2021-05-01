@@ -15,7 +15,7 @@ class proto:
         self.specie = list()
         self.reazioni = list()
         self.history = dict()
-        self.flow_history = list()
+        # self.flow_history = list()
 
         self.conf_file = conf_file
         self.chem_file = chem_file
@@ -163,8 +163,8 @@ class proto:
 
         delta[-1] = dC
 
-        flow[-1] = self.volume
-        self.flow_history.append({t: flow})
+        # flow[-1] = self.volume
+        # self.flow_history.append({t: flow})
 
         return delta
 
