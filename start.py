@@ -13,9 +13,6 @@ if __name__ == "__main__":
 
     print("--- %s seconds ---" % (time.time() - start_time))
 
-    p.print_to_file()
-    p.print_graph()
-
-    p.print_division_file()
+    p.print_info()
 
     # visual.draw(p)

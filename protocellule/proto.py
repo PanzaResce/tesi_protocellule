@@ -15,6 +15,7 @@ class proto:
         self.specie = list()
         self.reazioni = list()
         self.history = dict()
+        self.division_history = dict()
         # self.flow_history = list()
 
         self.conf_file = conf_file
@@ -68,7 +69,7 @@ class proto:
                 self.reazioni.append(reazione(tipo, vett_reazione))
 
     def simula(self):
-        (x0, xn, n, n_div, div_coeff) = proto.read_conf(self.conf_file)
+        (x0, xn, n, n_div, div_coeff, print_div, print_hist) = proto.read_conf(self.conf_file)
         self.div_coeff = div_coeff
 
         t_span = [x0, xn]
@@ -82,12 +83,16 @@ class proto:
             n_step = sol1.y.shape[1]
             out = [s[n_step - 1] for s in sol1.y]
 
+            if print_div:
+                self.fill_division_history(sol1.t[n_step-1], out)
+
             new_qnt = self.duplicate(out[-1])
 
             out[-1] = new_qnt
             y0 = out
 
-            self.fill_history(sol1.t, sol1.y)
+            if print_hist:
+                self.fill_full_history(sol1.t, sol1.y)
 
         print("END")
 
@@ -111,7 +116,7 @@ class proto:
             self.volume = new_volume
 
         delta = [0] * len(specie)
-        flow = [0] * len(specie)
+        # flow = [0] * len(specie)
 
         # applico le reazioni
         for i in range(self.n_reazioni):
@@ -156,7 +161,7 @@ class proto:
                 delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
                 # flow serve solo per generare il file dei flussi
-                flow[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
+                # flow[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
             else:
                 print("ALLARME FN: ", self.reazioni[i].tipo)
                 exit()
@@ -178,7 +183,14 @@ class proto:
         self.volume = self.calc_volume(qnt_dup)
         return qnt_dup
 
-    def fill_history(self, t, y):
+    def fill_division_history(self, t, y):
+        try:
+            t_offset = list(self.division_history.keys())[-1]
+        except IndexError:
+            t_offset = 0
+        self.division_history.update({t+t_offset: [s for s in y]})
+
+    def fill_full_history(self, t, y):
         n_step = y.shape[1]
         try:
             t_offset = list(self.history.keys())[-1]
@@ -186,62 +198,55 @@ class proto:
             t_offset = 0
         self.history.update({t[idx]+t_offset: [s[idx] for s in y] for idx in range(n_step)})
 
-    def print_to_file(self):
+    def print_info(self):
+        if len(self.history) != 0:
+            self.print_full_history_to_file()
+            self.print_history_graph()
+
+        if len(self.division_history) != 0:
+            self.print_division_file()
+            self.print_division_graph()
+        plt.show()
+
+    def print_full_history_to_file(self):
         file = self.chem_file.split(".")[0] + "_out.txt"
         with open(file, "w") as f:
             for t, l in self.history.items():
                 f.write(str(t)+"\t"+str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "")+"\n")
 
-    def print_flow_file(self):
-        hist = list()
-
-        # Calcolo i dt dai tempi assoluti
-        dt = list()
-        t_prev = 0
-        for i in range(len(self.flow_history)):
-            if i != 0:
-                for t, l in self.flow_history[i].items():
-                    dt.append(t - t_prev)
-                    t_prev = t
-
-        # Calcolo la quantità di flusso ---> [flusso] * volume / dt
-        idx = 0
-        for el in self.flow_history:
-            if idx != len(self.flow_history) - 1:
-                if dt[idx] > 0:
-                    hist.append({t: [flux * specie[-1] / dt[idx] for flux in specie if flux != specie[-1]] for t, specie in el.items()})
-                idx += 1
-
-        file = self.chem_file.split(".")[0] + "_flow.txt"
-        with open(file, "w") as f:
-            for el in hist:
-                for t, l in el.items():
-                    f.write(str(t)+"\t"+str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "")+"\n")
-
-    def print_division_file(self):
-        file = self.chem_file.split(".")[0] + "_division.txt"
-        t_prev_div = 0
-        with open(file, "w") as f:
-            l = list(self.history.items())
-            for i in range(len(l)):
-                if i != len(l) - 1:
-                    if l[i][-1][-1] / l[i + 1][-1][-1] > 1.95:
-                        t_elapsed = l[i][0] - t_prev_div
-                        f.write(str(l[i][0]) + "\t" + str(t_elapsed) + "\t" + str(l[i][1]).replace(",", "\t").replace("(", "").replace(")", "").replace("'", "").replace("[", "").replace("]", "")+"\n")
-                        t_prev_div = l[i][0]
-                else:
-                    t_elapsed = l[i][0] - t_prev_div
-                    f.write(str(l[i][0]) + "\t" + str(t_elapsed) + "\t" + str(l[i][1]).replace(",", "\t").replace("(", "").replace(")", "").replace("'", "").replace("[", "").replace("]", "") + "\n")
-
-    def print_graph(self):
+    def print_history_graph(self):
         x = list(self.history.keys())
+
+        plt.figure(1)
 
         for s in self.specie:
             y = [l[self.specie.index(s)] for t, l in self.history.items()]
             plt.plot(x, y, label=s.nome)
 
+        plt.xlabel('time (s)')
+
         plt.legend()
-        plt.show()
+        # plt.show()
+
+    def print_division_file(self):
+        file = self.chem_file.split(".")[0] + "_division.txt"
+        with open(file, "w") as f:
+            for t, l in self.division_history.items():
+                f.write(str(t)+"\t"+str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "")+"\n")
+
+    def print_division_graph(self):
+        x = [i for i in range(len(self.division_history))]
+
+        plt.figure(2)
+
+        for s in self.specie:
+            y = [l[self.specie.index(s)] for t, l in self.division_history.items()]
+            plt.plot(x, y, label=s.nome)
+
+        plt.xlabel('n. divisioni')
+
+        plt.legend()
+        # plt.show()
 
     def terminate(self, t, y):
         """Condizione di terminazione --> quando la quantità di lipide è raddoppiata"""
@@ -264,13 +269,14 @@ class proto:
             n = int(riga.split()[2])
             n_div = int(riga.split()[3])
             div_coeff = int(riga.split()[4])
+            print_division_file = int(riga.split()[5])
+            print_history_file = int(riga.split()[6])
 
-            return x0, xn, n, n_div, div_coeff
+            return x0, xn, n, n_div, div_coeff, print_division_file, print_history_file
 
     @staticmethod
     def pr_sc_vett(sc, vett):
         return [specie(s.nome, sc * s.qnt, s.inter) for s in vett]
-
 
     @staticmethod
     def somma_vett(v1, v2):
