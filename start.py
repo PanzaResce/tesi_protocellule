@@ -1,5 +1,5 @@
 import time
-from protocellule.proto import proto
+from protocellule.proto import Proto
 
 if __name__ == "__main__":
 
@@ -7,7 +7,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
 
-    p = proto("conf.txt", file+".txt")
+    p = Proto("conf.txt", file+".txt")
     # p = proto()
     p.simula()
 

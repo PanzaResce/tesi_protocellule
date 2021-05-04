@@ -5,7 +5,7 @@ from protocellule.specie import specie
 from protocellule.reazione import reazione
 
 
-class proto:
+class Proto:
     """ Per come è concepita la classe proto, tutte
         le informazioni che vengono memorizzate rappresentanto
         lo stato iniziale della cellula """
@@ -69,7 +69,7 @@ class proto:
                 self.reazioni.append(reazione(tipo, vett_reazione))
 
     def simula(self):
-        (x0, xn, n, n_div, div_coeff, print_div, print_hist) = proto.read_conf(self.conf_file)
+        (x0, xn, n, n_div, div_coeff, print_div, print_hist) = Proto.read_conf(self.conf_file)
         self.div_coeff = div_coeff
 
         t_span = [x0, xn]
@@ -83,6 +83,8 @@ class proto:
             n_step = sol1.y.shape[1]
             out = [s[n_step - 1] for s in sol1.y]
 
+            print(f"N. divisione: {i+1}")
+
             if print_div:
                 self.fill_division_history(sol1.t[n_step-1], out)
 
@@ -90,6 +92,11 @@ class proto:
 
             out[-1] = new_qnt
             y0 = out
+
+            # va fatto un ulteriore controllo sulle quantità negative
+            for idx in range(len(y0)):
+                if y0[idx] < 0:
+                    y0[idx] = 0
 
             if print_hist:
                 self.fill_full_history(sol1.t, sol1.y)
@@ -100,68 +107,105 @@ class proto:
         """ Restituisce un vettore che indica le nuove
             quantità a seguito delle reazioni """
 
+        # Calcolo volume attuale
+        self.volume = self.calc_volume(specie[-1])
+
         # calcolo variazione quantità di lipide con vecchio volume
         dC = sum([s.inter["boundary"] * specie[self.specie.index(s)] for s in self.specie]) * self.volume
 
+        delta = [0] * len(specie)
+
         if t != 0:
-            # calcolo volume attuale con quantità lipide attuale
-            new_volume = self.calc_volume(specie[-1])
+            # calcolo volume attuale con nuova quantità lipide
+            new_volume = self.calc_volume(specie[-1] + dC)
             v_rapp = self.volume / new_volume
 
             # ricalcolo concentrazioni sostanze con rapporto (volume vecchio / volume nuovo)
             for idx, s in enumerate(specie):
                 if idx != len(specie)-1 and bool(self.specie[idx].inter["bufferizzata"]) is not True:
-                    specie[idx] *= v_rapp
+                    delta[idx] -= specie[idx]*(1-v_rapp)
 
             self.volume = new_volume
-
-        delta = [0] * len(specie)
-        # flow = [0] * len(specie)
 
         # applico le reazioni
         for i in range(self.n_reazioni):
             if self.reazioni[i].tipo == 12:
                 flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])]
+                if specie[self.specie.index(self.reazioni[i].reagenti[0])] <= 0:
+                    flusso = 0
+
                 delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[1])] += flusso
             elif self.reazioni[i].tipo == 21:
-                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])] * specie[self.specie.index(self.reazioni[i].reagenti[1])]
+                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])] * \
+                                                     specie[self.specie.index(self.reazioni[i].reagenti[1])]
+                if specie[self.specie.index(self.reazioni[i].reagenti[0])] <= 0:
+                    flusso = 0
+                if specie[self.specie.index(self.reazioni[i].reagenti[1])] <= 0:
+                    flusso = 0
+
                 delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
                 delta[self.specie.index(self.reazioni[i].reagenti[1])] -= flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
             elif self.reazioni[i].tipo == 22:
-                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])] * specie[self.specie.index(self.reazioni[i].reagenti[1])]
+                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])] * \
+                                                     specie[self.specie.index(self.reazioni[i].reagenti[1])]
+                if specie[self.specie.index(self.reazioni[i].reagenti[0])] <= 0:
+                    flusso = 0
+                if specie[self.specie.index(self.reazioni[i].reagenti[1])] <= 0:
+                    flusso = 0
+
                 delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
                 delta[self.specie.index(self.reazioni[i].reagenti[1])] -= flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[1])] += flusso
             elif self.reazioni[i].tipo == 10:
-                flusso = self.reazioni[i].costante
+                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])]
+                if specie[self.specie.index(self.reazioni[i].reagenti[0])] <= 0:
+                    flusso = 0
+
                 delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
             elif self.reazioni[i].tipo == 1:
                 flusso = self.reazioni[i].costante
+
                 delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
             elif self.reazioni[i].tipo == 23:
-                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])] * specie[self.specie.index(self.reazioni[i].reagenti[1])]
+                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])] * \
+                                                     specie[self.specie.index(self.reazioni[i].reagenti[1])]
+                if specie[self.specie.index(self.reazioni[i].reagenti[0])] <= 0:
+                    flusso = 0
+                if specie[self.specie.index(self.reazioni[i].reagenti[1])] <= 0:
+                    flusso = 0
+
                 delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
                 delta[self.specie.index(self.reazioni[i].reagenti[1])] -= flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[1])] += flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[2])] += flusso
             elif self.reazioni[i].tipo == 32:
-                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])] * specie[self.specie.index(self.reazioni[i].reagenti[1])] * specie[self.specie.index(self.reazioni[i].reagenti[2])]
+                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])] * \
+                                                     specie[self.specie.index(self.reazioni[i].reagenti[1])] * \
+                                                     specie[self.specie.index(self.reazioni[i].reagenti[2])]
+                if specie[self.specie.index(self.reazioni[i].reagenti[0])] <= 0:  # MV
+                    flusso = 0
+                if specie[self.specie.index(self.reazioni[i].reagenti[1])] <= 0:  # MV
+                    flusso = 0
+                if specie[self.specie.index(self.reazioni[i].reagenti[2])] <= 0:  # MV
+                    flusso = 0
+
                 delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
                 delta[self.specie.index(self.reazioni[i].reagenti[1])] -= flusso
                 delta[self.specie.index(self.reazioni[i].reagenti[2])] -= flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[1])] += flusso
             elif self.reazioni[i].tipo == 210:
-                flusso = self.reazioni[i].costante * (specie[self.specie.index(self.reazioni[i].reagenti[0])] - specie[self.specie.index(self.reazioni[i].prodotti[0])]) / pow(self.volume, 1/3)
+                # qui ha senso un flusso negativo
+                flusso = self.reazioni[i].costante * (specie[self.specie.index(self.reazioni[i].reagenti[0])] -
+                                                      specie[self.specie.index(self.reazioni[i].prodotti[0])]) / \
+                                                      pow(self.volume, 1 / 3)
                 delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
                 delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
-                # flow serve solo per generare il file dei flussi
-                # flow[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
             else:
                 print("ALLARME FN: ", self.reazioni[i].tipo)
                 exit()
@@ -170,10 +214,12 @@ class proto:
             if bool(s.inter["bufferizzata"]) is True:
                 delta[self.specie.index(s.nome)] = 0
 
-        delta[-1] = dC
+        # Controllo specie negativa ---> mando specie a 0
+        for s in self.specie:
+            if specie[self.specie.index(s.nome)] + delta[self.specie.index(s.nome)] < 0:
+                delta[self.specie.index(s.nome)] = -specie[self.specie.index(s.nome)]
 
-        # flow[-1] = self.volume
-        # self.flow_history.append({t: flow})
+        delta[-1] = dC
 
         return delta
 
@@ -256,12 +302,13 @@ class proto:
     terminate.terminal = True
 
     def calc_volume(self, lipidi):
-        return (1000 / 6) * pi * pow(self.membrane_thickness, 3) * pow(pow((lipidi / (self.density * pi * pow(self.membrane_thickness, 3))) - 1 / 3, 1 / 2) - 1, 3)
+        return (1000 / 6) * pi * pow(self.membrane_thickness, 3) * \
+               pow(pow((lipidi / (self.density * pi * pow(self.membrane_thickness, 3))) - 1 / 3, 1 / 2) - 1, 3)
 
     @staticmethod
     def read_conf(conf_file):
         with open(conf_file) as f:
-            f.readline()    # riga vuota
+            f.readline()    # riga contenente i titoli
 
             riga = f.readline()
             x0 = int(riga.split()[0])
