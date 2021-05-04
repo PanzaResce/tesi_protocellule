@@ -256,7 +256,9 @@ class Proto:
 
     def print_full_history_to_file(self):
         file = self.chem_file.split(".")[0] + "_out.txt"
+
         with open(file, "w") as f:
+            f.write("T" + "\t" + str([s.nome for s in self.specie]).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "") + "\t" + "Container" + "\n")
             for t, l in self.history.items():
                 f.write(str(t)+"\t"+str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "")+"\n")
 
@@ -276,9 +278,14 @@ class Proto:
 
     def print_division_file(self):
         file = self.chem_file.split(".")[0] + "_division.txt"
+        t_prev = 0
         with open(file, "w") as f:
+            f.write("T" + "\t" + "T_prev_div" + "\t" + str([s.nome for s in self.specie]).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "") + "\t" + "Container" + "\n")
+
             for t, l in self.division_history.items():
-                f.write(str(t)+"\t"+str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "")+"\n")
+                t_offset = t - t_prev
+                f.write(str(t)+"\t"+str(t_offset)+"\t"+str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "")+"\n")
+                t_prev = t
 
     def print_division_graph(self):
         x = [i for i in range(len(self.division_history))]
