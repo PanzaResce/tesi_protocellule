@@ -130,82 +130,101 @@ class Proto:
         # applico le reazioni
         for i in range(self.n_reazioni):
             if self.reazioni[i].tipo == 12:
-                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])]
-                if specie[self.specie.index(self.reazioni[i].reagenti[0])] <= 0:
+                i_reagente_0 = self.specie.index(self.reazioni[i].reagenti[0])
+                i_prodotto_0 = self.specie.index(self.reazioni[i].prodotti[0])
+                i_prodotto_1 = self.specie.index(self.reazioni[i].prodotti[1])
+                flusso = self.reazioni[i].costante * specie[i_reagente_0]
+                if specie[i_reagente_0] <= 0:
                     flusso = 0
 
-                delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
-                delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
-                delta[self.specie.index(self.reazioni[i].prodotti[1])] += flusso
+                delta[i_reagente_0] -= flusso
+                delta[i_prodotto_0] += flusso
+                delta[i_prodotto_1] += flusso
             elif self.reazioni[i].tipo == 21:
-                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])] * \
-                                                     specie[self.specie.index(self.reazioni[i].reagenti[1])]
-                if specie[self.specie.index(self.reazioni[i].reagenti[0])] <= 0:
+                i_reagente_0 = self.specie.index(self.reazioni[i].reagenti[0])
+                i_reagente_1 = self.specie.index(self.reazioni[i].reagenti[1])
+                i_prodotto_0 = self.specie.index(self.reazioni[i].prodotti[0])
+                flusso = self.reazioni[i].costante * specie[i_reagente_0] * specie[i_reagente_1]
+                if specie[i_reagente_0] <= 0:
                     flusso = 0
-                if specie[self.specie.index(self.reazioni[i].reagenti[1])] <= 0:
+                if specie[i_reagente_1] <= 0:
                     flusso = 0
 
-                delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
-                delta[self.specie.index(self.reazioni[i].reagenti[1])] -= flusso
-                delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
+                delta[i_reagente_0] -= flusso
+                delta[i_reagente_1] -= flusso
+                delta[i_prodotto_0] += flusso
             elif self.reazioni[i].tipo == 22:
-                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])] * \
-                                                     specie[self.specie.index(self.reazioni[i].reagenti[1])]
-                if specie[self.specie.index(self.reazioni[i].reagenti[0])] <= 0:
+                i_reagente_0 = self.specie.index(self.reazioni[i].reagenti[0])
+                i_reagente_1 = self.specie.index(self.reazioni[i].reagenti[1])
+                i_prodotto_0 = self.specie.index(self.reazioni[i].prodotti[0])
+                i_prodotto_1 = self.specie.index(self.reazioni[i].prodotti[1])
+                flusso = self.reazioni[i].costante * specie[i_reagente_0] * specie[i_reagente_1]
+                if specie[i_reagente_0] <= 0:
                     flusso = 0
-                if specie[self.specie.index(self.reazioni[i].reagenti[1])] <= 0:
+                if specie[i_reagente_1] <= 0:
                     flusso = 0
 
-                delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
-                delta[self.specie.index(self.reazioni[i].reagenti[1])] -= flusso
-                delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
-                delta[self.specie.index(self.reazioni[i].prodotti[1])] += flusso
+                delta[i_reagente_0] -= flusso
+                delta[i_reagente_1] -= flusso
+                delta[i_prodotto_0] += flusso
+                delta[i_prodotto_1] += flusso
             elif self.reazioni[i].tipo == 10:
-                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])]
-                if specie[self.specie.index(self.reazioni[i].reagenti[0])] <= 0:
+                i_reagente_0 = self.specie.index(self.reazioni[i].reagenti[0])
+                flusso = self.reazioni[i].costante * specie[i_reagente_0]
+                if specie[i_reagente_0] <= 0:
                     flusso = 0
 
-                delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
+                delta[i_reagente_0] -= flusso
             elif self.reazioni[i].tipo == 1:
+                i_prodotto_0 = self.specie.index(self.reazioni[i].prodotti[0])
                 flusso = self.reazioni[i].costante
 
-                delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
+                delta[i_prodotto_0] += flusso
             elif self.reazioni[i].tipo == 23:
-                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])] * \
-                                                     specie[self.specie.index(self.reazioni[i].reagenti[1])]
-                if specie[self.specie.index(self.reazioni[i].reagenti[0])] <= 0:
+                i_reagente_0 = self.specie.index(self.reazioni[i].reagenti[0])
+                i_reagente_1 = self.specie.index(self.reazioni[i].reagenti[1])
+                i_prodotto_0 = self.specie.index(self.reazioni[i].prodotti[0])
+                i_prodotto_1 = self.specie.index(self.reazioni[i].prodotti[1])
+                i_prodotto_2 = self.specie.index(self.reazioni[i].prodotti[2])
+                flusso = self.reazioni[i].costante * specie[i_reagente_0] * specie[i_reagente_1]
+                if specie[i_reagente_0] <= 0:
                     flusso = 0
-                if specie[self.specie.index(self.reazioni[i].reagenti[1])] <= 0:
+                if specie[i_reagente_1] <= 0:
                     flusso = 0
 
-                delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
-                delta[self.specie.index(self.reazioni[i].reagenti[1])] -= flusso
-                delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
-                delta[self.specie.index(self.reazioni[i].prodotti[1])] += flusso
-                delta[self.specie.index(self.reazioni[i].prodotti[2])] += flusso
+                delta[i_reagente_1] -= flusso
+                delta[i_reagente_1] -= flusso
+                delta[i_prodotto_0] += flusso
+                delta[i_prodotto_1] += flusso
+                delta[i_prodotto_2] += flusso
             elif self.reazioni[i].tipo == 32:
-                flusso = self.reazioni[i].costante * specie[self.specie.index(self.reazioni[i].reagenti[0])] * \
-                                                     specie[self.specie.index(self.reazioni[i].reagenti[1])] * \
-                                                     specie[self.specie.index(self.reazioni[i].reagenti[2])]
-                if specie[self.specie.index(self.reazioni[i].reagenti[0])] <= 0:  # MV
+                i_reagente_0 = self.specie.index(self.reazioni[i].reagenti[0])
+                i_reagente_1 = self.specie.index(self.reazioni[i].reagenti[1])
+                i_reagente_2 = self.specie.index(self.reazioni[i].reagenti[2])
+                i_prodotto_0 = self.specie.index(self.reazioni[i].prodotti[0])
+                i_prodotto_1 = self.specie.index(self.reazioni[i].prodotti[1])
+                flusso = self.reazioni[i].costante * specie[i_reagente_0] * specie[i_reagente_1] * specie[i_reagente_2]
+                if specie[i_reagente_0] <= 0:
                     flusso = 0
-                if specie[self.specie.index(self.reazioni[i].reagenti[1])] <= 0:  # MV
+                if specie[i_reagente_1] <= 0:
                     flusso = 0
-                if specie[self.specie.index(self.reazioni[i].reagenti[2])] <= 0:  # MV
+                if specie[i_reagente_2] <= 0:
                     flusso = 0
 
-                delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
-                delta[self.specie.index(self.reazioni[i].reagenti[1])] -= flusso
-                delta[self.specie.index(self.reazioni[i].reagenti[2])] -= flusso
-                delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
-                delta[self.specie.index(self.reazioni[i].prodotti[1])] += flusso
+                delta[i_reagente_0] -= flusso
+                delta[i_reagente_1] -= flusso
+                delta[i_reagente_2] -= flusso
+                delta[i_prodotto_0] += flusso
+                delta[i_prodotto_1] += flusso
             elif self.reazioni[i].tipo == 210:
+                i_reagente_0 = self.specie.index(self.reazioni[i].reagenti[0])
+                i_prodotto_0 = self.specie.index(self.reazioni[i].prodotti[0])
                 # qui ha senso un flusso negativo
-                flusso = self.reazioni[i].costante * (specie[self.specie.index(self.reazioni[i].reagenti[0])] -
-                                                      specie[self.specie.index(self.reazioni[i].prodotti[0])]) / \
+                flusso = self.reazioni[i].costante * (specie[i_reagente_0] -
+                                                      specie[i_prodotto_0]) / \
                                                       pow(self.volume, 1 / 3)
-                delta[self.specie.index(self.reazioni[i].reagenti[0])] -= flusso
-                delta[self.specie.index(self.reazioni[i].prodotti[0])] += flusso
+                delta[i_reagente_0] -= flusso
+                delta[i_prodotto_0] += flusso
             else:
                 print("ALLARME FN: ", self.reazioni[i].tipo)
                 exit()
