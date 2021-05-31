@@ -6,7 +6,7 @@ density		2635.778 //densita molecolare contenitore in mol/m^3
 
 A	0.01	0	0
 B	0.01	0	0
-C	0.01	0	0
+C	0.01	0	1
 *Compl	0.0	0	0
 
 1	NULL > A ; 1.0

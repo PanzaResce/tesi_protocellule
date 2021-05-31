@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 from math import pi
@@ -17,6 +18,12 @@ class Proto:
         self.history = dict()
         self.division_history = dict()
         # self.flow_history = list()
+
+        # Event attribute
+        self.t_abs = 0
+        self.t_prev = 0
+        self.t_hist = list()
+        self.events = list()
 
         self.conf_file = conf_file
         self.chem_file = chem_file
@@ -68,6 +75,34 @@ class Proto:
 
                 self.reazioni.append(reazione(tipo, vett_reazione))
 
+            # Lettura eventi
+            res = input("La simulazione prevede degli eventi? (y/n)")
+            if res == "y":
+                print("Gli eventi saranno presi dalla directory ./eventi")
+                eventi = list()
+                for filename in os.scandir("./eventi"):
+                    if filename.is_file():
+                        print(filename.path)
+                        with open(filename) as f:
+                            riga = f.readline()
+                            t = float(riga.split()[1])
+                            const = dict()
+                            f.readline()   #riga vuota
+                            f.readline()   #riga intestazioni
+
+                            for line in f:
+                                n_reazione = int(line.split()[0])
+                                if n_reazione > len(self.reazioni):
+                                    print(f"Numero di reazione non valido, le reazioni sono {len(self.reazioni)}")
+                                    self.events = list()
+                                    return
+                                const[n_reazione] = float(line.split()[1])
+
+                            evento = (t, const)
+                            eventi.append(evento)
+                self.events = Proto.sort_list(eventi)
+                print(self.events)
+
     def simula(self):
         (x0, xn, n, n_div, div_coeff, print_div, print_hist) = Proto.read_conf(self.conf_file)
         self.div_coeff = div_coeff
@@ -78,12 +113,12 @@ class Proto:
         y0.append(self.contenitore)
 
         for i in range(n_div):
-            sol1 = solve_ivp(self.fn, t_span, y0, events=self.terminate)
+            sol1 = solve_ivp(self.fn, t_span, y0, events=[self.terminate, self.check_event])
 
             n_step = sol1.y.shape[1]
             out = [s[n_step - 1] for s in sol1.y]
 
-            print(f"N. divisione: {i+1}")
+            print(f"N. divisione: {i+1}, {out[-1]}, {sol1.t[-1]}, {self.t_abs}")
 
             if print_div:
                 self.fill_division_history(sol1.t[n_step-1], out)
@@ -103,14 +138,26 @@ class Proto:
 
         print("END")
 
+        #Test
+        # c = 0
+        # for i in range(len(self.t_hist)):
+        #     if i != 0:
+        #         if self.t_hist[i-1] > self.t_hist[i]:
+        #             print(f"Errore {i}")
+        #             c+=1
+        # print(f"Errori: {c}")
+
+        #Test
+        print(f"{len(self.events)} eventi non avvenuti")
+
     def fn(self, t, specie):
         """ Restituisce un vettore che indica le nuove
             quantità a seguito delle reazioni """
 
-        # Calcolo volume attuale
+        # Calcolo volume attuale con quantità di lipide attuale
         self.volume = self.calc_volume(specie[-1])
 
-        # calcolo variazione quantità di lipide con vecchio volume
+        # calcolo variazione quantità di lipide con nuovo volume
         dC = sum([s.inter["boundary"] * specie[self.specie.index(s)] for s in self.specie]) * self.volume
 
         delta = [0] * len(specie)
@@ -306,6 +353,10 @@ class Proto:
                 f.write(str(t)+"\t"+str(t_offset)+"\t"+str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "")+"\n")
                 t_prev = t
 
+        # with open("prova.txt", "w") as f:
+        #     for t in self.event_history:
+        #         f.write(str(t)+"\n")
+
     def print_division_graph(self):
         x = [i for i in range(len(self.division_history))]
 
@@ -327,6 +378,40 @@ class Proto:
         return 1
     terminate.terminal = True
 
+    def check_event(self, t, y):
+        if t == 0:
+            self.t_prev = 0
+
+        prev_t = float("inf")
+
+        # Calcolo tempo assoluto
+        if t > self.t_prev:
+            self.t_abs = self.t_abs + (t - self.t_prev)
+            self.t_prev = t
+            try:
+                prev_t = self.t_hist[-1]
+            except IndexError:
+                prev_t = float("inf")
+            self.t_hist.append(self.t_abs)
+
+        if len(self.events) <= 0:
+            return 0
+
+        # il primo elemento è il prossimo evento che deve avvenire
+        t_evento = self.events[0][0]
+
+        if prev_t <= t_evento < self.t_abs:
+            evento = self.events.pop(0)
+            self.apply_event(evento)
+            print("TRIGGER")
+
+        return 0
+    check_event.terminal = False
+
+    def apply_event(self, event):
+        for k, v in event[1].items():
+            self.reazioni[k].costante = v
+
     def calc_volume(self, lipidi):
         return (1000 / 6) * pi * pow(self.membrane_thickness, 3) * \
                pow(pow((lipidi / (self.density * pi * pow(self.membrane_thickness, 3))) - 1 / 3, 1 / 2) - 1, 3)
@@ -346,6 +431,19 @@ class Proto:
             print_history_file = int(riga.split()[6])
 
             return x0, xn, n, n_div, div_coeff, print_division_file, print_history_file
+
+    @staticmethod
+    def sort_list(list):
+        for i in range(1, len(list)):
+            j = i
+            while j > 0 and list[j-1][0] > list[j][0]:
+                app = list[j]
+                list[j] = list[j-1]
+                list[j-1] = app
+                j = j-1
+
+        return list
+
 
     @staticmethod
     def pr_sc_vett(sc, vett):
