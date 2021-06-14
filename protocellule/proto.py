@@ -19,7 +19,7 @@ class Proto:
         self.division_history = dict()
         # self.flow_history = list()
 
-        # Event attribute
+        # Event-related attribute
         self.t_abs = 0
         self.t_prev = 0
         self.t_hist = list()
@@ -110,6 +110,11 @@ class Proto:
         t_span = [x0, xn]
 
         y0 = [s.qnt for s in self.specie]
+
+        # Nel vettore passato all'integratore gli ultimi due elementi sono rispettivamente
+        # il lipide vecchio e il lipide nuovo, all'inizio sono uguali
+        # Servono per calcolare il volume vecchio e il volume nuovo
+        y0.append(self.contenitore)
         y0.append(self.contenitore)
 
         for i in range(n_div):
@@ -151,28 +156,30 @@ class Proto:
         print(f"{len(self.events)} eventi non avvenuti")
 
     def fn(self, t, specie):
-        """ Restituisce un vettore che indica le nuove
-            quantità a seguito delle reazioni """
+        """ Restituisce un vettore che indica la variazione delle
+         nuove quantità a seguito delle reazioni """
 
         # Calcolo volume attuale con quantità di lipide attuale
         self.volume = self.calc_volume(specie[-1])
-
-        # calcolo variazione quantità di lipide con nuovo volume
-        dC = sum([s.inter["boundary"] * specie[self.specie.index(s)] for s in self.specie]) * self.volume
 
         delta = [0] * len(specie)
 
         if t != 0:
             # calcolo volume attuale con nuova quantità lipide
-            new_volume = self.calc_volume(specie[-1] + dC)
-            v_rapp = self.volume / new_volume
+            # new_volume = self.calc_volume(specie[-1] + dC)
+            # v_rapp = self.volume / new_volume
+
+            # Calcolo volume vecchio con quantità di lipide vecchia
+            Vv = self.calc_volume(specie[-2])
+            v_rapp = Vv / self.volume
 
             # ricalcolo concentrazioni sostanze con rapporto (volume vecchio / volume nuovo)
             for idx, s in enumerate(specie):
-                if idx != len(specie)-1 and bool(self.specie[idx].inter["bufferizzata"]) is not True:
+                # if idx != len(specie)-1 and bool(self.specie[idx].inter["bufferizzata"]) is not True:
+                if idx != len(specie)-1 and idx != len(specie)-2 and bool(self.specie[idx].inter["bufferizzata"]) is not True:
                     delta[idx] -= specie[idx]*(1-v_rapp)
 
-            self.volume = new_volume
+            # self.volume = new_volume
 
         # applico le reazioni
         for i in range(self.n_reazioni):
@@ -285,7 +292,11 @@ class Proto:
             if specie[self.specie.index(s.nome)] + delta[self.specie.index(s.nome)] < 0:
                 delta[self.specie.index(s.nome)] = -specie[self.specie.index(s.nome)]
 
+        # calcolo variazione quantità di lipide con nuovo volume
+        dC = sum([s.inter["boundary"] * specie[self.specie.index(s)] for s in self.specie]) * self.volume
+
         delta[-1] = dC
+        delta[-2] = specie[-1] - specie[-2]
 
         return delta
 
@@ -384,7 +395,7 @@ class Proto:
 
         prev_t = float("inf")
 
-        # Calcolo tempo assoluto
+        # Calcolo tempo assoluto, ovveri i tempi in cui l'integratore chiama l'evento
         if t > self.t_prev:
             self.t_abs = self.t_abs + (t - self.t_prev)
             self.t_prev = t
@@ -443,20 +454,6 @@ class Proto:
                 j = j-1
 
         return list
-
-
-    @staticmethod
-    def pr_sc_vett(sc, vett):
-        return [specie(s.nome, sc * s.qnt, s.inter) for s in vett]
-
-    @staticmethod
-    def somma_vett(v1, v2):
-        return [specie(v1[i].nome, v1[i].qnt + v2[i].qnt, v1[i].inter) for i in range(len(v1))]
-
-    @staticmethod
-    def copy(specie1):
-        """ Deep copy """
-        return [specie(s1.nome, s1.qnt, s1.inter) for s1 in specie1]
 
     def __str__(self):
         return f"Numero specie: {str(self.n_specie)}\nNumero reazioni: {self.n_reazioni}\nSpecie: {str(self.specie)}\n"
