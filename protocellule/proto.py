@@ -131,6 +131,7 @@ class Proto:
             new_qnt = self.duplicate(out[-1])
 
             out[-1] = new_qnt
+            out[-2] = new_qnt
             y0 = out
 
             # va fatto un ulteriore controllo sulle quantità negative
@@ -161,16 +162,12 @@ class Proto:
 
         # Calcolo volume attuale con quantità di lipide attuale
         self.volume = self.calc_volume(specie[-1])
+        # Calcolo volume vecchio con quantità di lipide precedente
+        Vv = self.calc_volume(specie[-2])
 
         delta = [0] * len(specie)
 
         if t != 0:
-            # calcolo volume attuale con nuova quantità lipide
-            # new_volume = self.calc_volume(specie[-1] + dC)
-            # v_rapp = self.volume / new_volume
-
-            # Calcolo volume vecchio con quantità di lipide vecchia
-            Vv = self.calc_volume(specie[-2])
             v_rapp = Vv / self.volume
 
             # ricalcolo concentrazioni sostanze con rapporto (volume vecchio / volume nuovo)
@@ -178,8 +175,6 @@ class Proto:
                 # if idx != len(specie)-1 and bool(self.specie[idx].inter["bufferizzata"]) is not True:
                 if idx != len(specie)-1 and idx != len(specie)-2 and bool(self.specie[idx].inter["bufferizzata"]) is not True:
                     delta[idx] -= specie[idx]*(1-v_rapp)
-
-            # self.volume = new_volume
 
         # applico le reazioni
         for i in range(self.n_reazioni):
@@ -293,7 +288,7 @@ class Proto:
                 delta[self.specie.index(s.nome)] = -specie[self.specie.index(s.nome)]
 
         # calcolo variazione quantità di lipide con nuovo volume
-        dC = sum([s.inter["boundary"] * specie[self.specie.index(s)] for s in self.specie]) * self.volume
+        dC = sum([s.inter["boundary"] * specie[self.specie.index(s)] for s in self.specie]) * Vv
 
         delta[-1] = dC
         delta[-2] = specie[-1] - specie[-2]
