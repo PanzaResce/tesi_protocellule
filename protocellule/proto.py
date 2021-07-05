@@ -156,9 +156,28 @@ class Proto:
         #Test
         print(f"{len(self.events)} eventi non avvenuti")
 
-    def fn(self, t, specie):
+    def fn(self, arr_t, specie):
         """ Restituisce un vettore che indica la variazione delle
-         nuove quantità a seguito delle reazioni """
+         nuove quantità a seguito delle reazioni
+         t: lista
+            t[0] : istante di tempo attuale
+            t[1] : dt
+         specie : lista che contiene le quantità delle specie
+         """
+
+        # if t > self.dt[1]:
+        #     dt = t - self.dt[1]
+        # elif t == self.dt[1]:
+        # elif t < self.dt[1]:
+
+        print(f"DT inner: {arr_t}")
+        # Unpack arr_t
+        try:
+            t = arr_t[0]
+            dt = arr_t[1]
+        except TypeError:
+            t = arr_t
+            dt = 1
 
         # Calcolo volume attuale con quantità di lipide attuale
         self.volume = self.calc_volume(specie[-1])
@@ -174,7 +193,7 @@ class Proto:
             for idx, s in enumerate(specie):
                 # if idx != len(specie)-1 and bool(self.specie[idx].inter["bufferizzata"]) is not True:
                 if idx != len(specie)-1 and idx != len(specie)-2 and bool(self.specie[idx].inter["bufferizzata"]) is not True:
-                    delta[idx] -= specie[idx]*(1-v_rapp)
+                    delta[idx] -= specie[idx]*(1-v_rapp) / dt
 
         # applico le reazioni
         for i in range(self.n_reazioni):
@@ -291,7 +310,7 @@ class Proto:
         dC = sum([s.inter["boundary"] * specie[self.specie.index(s)] for s in self.specie]) * Vv
 
         delta[-1] = dC
-        delta[-2] = specie[-1] - specie[-2]
+        delta[-2] = (specie[-1] - specie[-2]) / dt
 
         return delta
 
