@@ -118,7 +118,7 @@ class Proto:
         y0.append(self.contenitore)
 
         for i in range(n_div):
-            sol1 = solve_ivp(self.fn, t_span, y0, events=[self.terminate, self.check_event])
+            sol1 = solve_ivp(self.fn, t_span, y0, method="LSODA", events=[self.terminate, self.check_event])
 
             n_step = sol1.y.shape[1]
             out = [s[n_step - 1] for s in sol1.y]
