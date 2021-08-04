@@ -76,9 +76,9 @@ class Proto:
                 self.reazioni.append(reazione(tipo, vett_reazione))
 
             # Lettura eventi
-            res = input("La simulazione prevede degli eventi? (y/n)")
+            res = input("La simulazione prevede degli eventi? (y/n)\n")
             if res == "y":
-                print("Gli eventi saranno presi dalla directory ./eventi")
+                print("Gli eventi saranno presi dalla directory ./eventi\n")
                 eventi = list()
                 for filename in os.scandir("./eventi"):
                     if filename.is_file():
@@ -435,6 +435,8 @@ class Proto:
 
     def apply_event(self, event):
         for k, v in event[1].items():
+            if str(self.reazioni[k].tipo) == "210":
+                v = v * pow(36 * pi, 1 / 3) / self.membrane_thickness
             self.reazioni[k].costante = v
 
     def calc_volume(self, lipidi):
