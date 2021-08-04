@@ -128,7 +128,12 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-#
+# Pycharm
 .idea/
+
+# Program's output file
 *_out.txt
 
+# Scipy folder
+scipy/
+scipy.libs/
