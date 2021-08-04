@@ -134,3 +134,6 @@ dmypy.json
 # Program's output file
 *_out.txt
 
+# Scipy folder
+scipy/
+scipy.libs/
