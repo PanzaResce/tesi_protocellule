@@ -15,7 +15,8 @@ class Proto:
 
         self.specie = list()
         self.reazioni = list()
-        self.history = dict()
+        # self.history = dict()
+        self.history = list()
         self.division_history = dict()
         # self.flow_history = list()
 
@@ -127,6 +128,8 @@ class Proto:
 
             if print_div:
                 self.fill_division_history(sol1.t[n_step-1], out)
+            if print_hist:
+                self.fill_full_history(sol1.t, sol1.y)
 
             new_qnt = self.duplicate(out[-1])
 
@@ -138,9 +141,6 @@ class Proto:
             for idx in range(len(y0)):
                 if y0[idx] < 0:
                     y0[idx] = 0
-
-            if print_hist:
-                self.fill_full_history(sol1.t, sol1.y)
 
         print("END")
 
@@ -170,7 +170,6 @@ class Proto:
         # elif t == self.dt[1]:
         # elif t < self.dt[1]:
 
-        print(f"DT inner: {arr_t}")
         # Unpack arr_t
         try:
             t = arr_t[0]
@@ -330,10 +329,13 @@ class Proto:
     def fill_full_history(self, t, y):
         n_step = y.shape[1]
         try:
-            t_offset = list(self.history.keys())[-1]
+            # t_offset = list(self.history.keys())[-1]
+            t_offset = self.history[-1][0]
         except IndexError:
             t_offset = 0
-        self.history.update({t[idx]+t_offset: [s[idx] for s in y] for idx in range(n_step)})
+        # self.history.update({t[idx]+t_offset: [s[idx] for s in y] for idx in range(n_step)})
+        for idx in range(n_step):
+            self.history.append([t[idx] + t_offset] + [s[idx] for s in y])
 
     def print_info(self):
         if len(self.history) != 0:
@@ -350,16 +352,20 @@ class Proto:
 
         with open(file, "w") as f:
             f.write("T" + "\t" + str([s.nome for s in self.specie]).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "") + "\t" + "Container" + "\n")
-            for t, l in self.history.items():
-                f.write(str(t)+"\t"+str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "")+"\n")
+            # for t, l in self.history.items():
+            #     f.write(str(t)+"\t"+str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "")+"\n")
+            for step in self.history:
+                f.write(str(step).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "") + "\n")
 
     def print_history_graph(self):
-        x = list(self.history.keys())
+        # x = list(self.history.keys())
+        x = [step[0] for step in self.history]
 
         plt.figure(1)
 
         for s in self.specie:
-            y = [l[self.specie.index(s)] for t, l in self.history.items()]
+            # y = [l[self.specie.index(s)] for t, l in self.history.items()]
+            y = [step[self.specie.index(s)+1] for step in self.history]
             plt.plot(x, y, label=s.nome)
 
         plt.xlabel('time (s)')
@@ -397,7 +403,11 @@ class Proto:
         # plt.show()
 
     def terminate(self, t, y):
-        """Condizione di terminazione --> quando la quantità di lipide è raddoppiata"""
+        """
+        Condizione di terminazione --> quando la quantità di lipide supera una soglia prestabilita
+        Questa soglia dipende dal coefficiente passato tramite file conf
+        Ex: div_coeff = 2 --> termina quando quantità lipide raddoppia rispetto a quella iniziale
+        """
         if y[-1]/self.contenitore >= self.div_coeff:
             return 0
         return 1
