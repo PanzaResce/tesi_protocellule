@@ -1,4 +1,5 @@
 import os
+import re
 import warnings
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
@@ -30,6 +31,7 @@ class Proto:
 
         self.conf_file = conf_file
         self.chem_file = chem_file
+        self.output_dir = os.path.join("./", chem_file.split(".")[0] + "_output")
 
         with open(chem_file) as f:
             # Lettura proprietà cellula
@@ -106,6 +108,9 @@ class Proto:
                 self.events = Proto.sort_list(eventi)
                 print(self.events)
 
+        if not os.path.exists(self.output_dir):
+            os.mkdir(self.output_dir)
+
     def simula(self):
         (x0, xn, n, n_div, div_coeff, print_div, print_hist, integration_method, lower_threshold) = Proto.read_conf(self.conf_file)
         self.div_coeff = div_coeff
@@ -137,7 +142,7 @@ class Proto:
             if print_div:
                 self.fill_division_history(sol1.t[n_step-1], out)
             if print_hist:
-                self.fill_full_history(sol1.t, sol1.y)
+                self.fill_full_history(sol1.t, sol1.y, gen=i)
 
             new_qnt = self.duplicate(out[-1])
 
@@ -329,7 +334,7 @@ class Proto:
             t_offset = 0
         self.division_history.update({t+t_offset: [s for s in y]})
 
-    def fill_full_history(self, t, y):
+    def fill_full_history(self, t, y, gen):
         n_step = y.shape[1]
         try:
             # t_offset = list(self.history.keys())[-1]
@@ -337,12 +342,19 @@ class Proto:
         except IndexError:
             t_offset = 0
         # self.history.update({t[idx]+t_offset: [s[idx] for s in y] for idx in range(n_step)})
+        local_history = list()
         for idx in range(n_step):
-            self.history.append([t[idx] + t_offset] + [s[idx] for s in y])
+            local_history.append([t[idx] + t_offset] + [s[idx] for s in y])
 
-    def print_info(self):
+        self.history += local_history
+
+        file = self.chem_file.split(".")[0] + f"_gen{gen}_out.txt"
+        self.print_full_history_to_file(file, local_history)
+
+    def print_final_info(self):
         if len(self.history) != 0:
-            self.print_full_history_to_file()
+            file = self.chem_file.split(".")[0] + "_out.txt"
+            self.print_full_history_to_file(file, self.history)
             self.print_history_graph()
 
         if len(self.division_history) != 0:
@@ -350,14 +362,18 @@ class Proto:
             self.print_division_graph()
         plt.show()
 
-    def print_full_history_to_file(self):
-        file = self.chem_file.split(".")[0] + "_out.txt"
+        # clear intermediate generation's file
+        for file in os.listdir(self.output_dir):
+            if re.search(r".*gen\d+_out\.txt$", file):
+                os.remove(os.path.join(self.output_dir, file))
 
-        with open(file, "w") as f:
+    def print_full_history_to_file(self, filename, dict):
+
+        with open(os.path.join(self.output_dir, filename), "w") as f:
             f.write("T" + "\t" + str([s.nome for s in self.specie]).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "") + "\t" + "Container" + "\n")
             # for t, l in self.history.items():
             #     f.write(str(t)+"\t"+str(l).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "")+"\n")
-            for step in self.history:
+            for step in dict:
                 f.write(str(step).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "") + "\n")
 
     def print_history_graph(self):
@@ -379,7 +395,7 @@ class Proto:
     def print_division_file(self):
         file = self.chem_file.split(".")[0] + "_division.txt"
         t_prev = 0
-        with open(file, "w") as f:
+        with open(os.path.join(self.output_dir, file), "w") as f:
             f.write("T" + "\t" + "T_prev_div" + "\t" + str([s.nome for s in self.specie]).replace(",", "\t").replace("[", "").replace("]", "").replace("'", "") + "\t" + "Container" + "\n")
 
             for t, l in self.division_history.items():
