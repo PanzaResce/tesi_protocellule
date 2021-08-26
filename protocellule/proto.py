@@ -107,7 +107,7 @@ class Proto:
                 print(self.events)
 
     def simula(self):
-        (x0, xn, n, n_div, div_coeff, print_div, print_hist, integration_method) = Proto.read_conf(self.conf_file)
+        (x0, xn, n, n_div, div_coeff, print_div, print_hist, integration_method, lower_threshold) = Proto.read_conf(self.conf_file)
         self.div_coeff = div_coeff
 
         t_span = [x0, xn]
@@ -122,6 +122,12 @@ class Proto:
 
         for i in range(n_div):
             sol1 = solve_ivp(self.fn, t_span, y0, method=integration_method, events=[self.terminate, self.check_event])
+
+            # va fatto un ulteriore controllo sulle quantità negative
+            for step in sol1.y:
+                for idx in range(len(step)):
+                    if step[idx] < lower_threshold:
+                        step[idx] = lower_threshold
 
             n_step = sol1.y.shape[1]
             out = [s[n_step - 1] for s in sol1.y]
@@ -138,11 +144,6 @@ class Proto:
             out[-1] = new_qnt
             out[-2] = new_qnt
             y0 = out
-
-            # va fatto un ulteriore controllo sulle quantità negative
-            for idx in range(len(y0)):
-                if y0[idx] < 0:
-                    y0[idx] = 0
 
         print("END")
 
@@ -472,8 +473,9 @@ class Proto:
             if integration_method not in METHODS.keys():
                 warnings.warn(f"Method {integration_method} not valid, switching by default to LSODA method", UserWarning)
                 integration_method = 'LSODA'
+            lower_threshold = float(riga.split()[8])
 
-            return x0, xn, n, n_div, div_coeff, print_division_file, print_history_file, integration_method
+            return x0, xn, n, n_div, div_coeff, print_division_file, print_history_file, integration_method, lower_threshold
 
     @staticmethod
     def sort_list(list):
