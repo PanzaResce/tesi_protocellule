@@ -1,6 +1,8 @@
 import os
+import warnings
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
+from scipy.integrate._ivp.ivp import METHODS
 from math import pi
 from protocellule.specie import specie
 from protocellule.reazione import reazione
@@ -105,7 +107,7 @@ class Proto:
                 print(self.events)
 
     def simula(self):
-        (x0, xn, n, n_div, div_coeff, print_div, print_hist) = Proto.read_conf(self.conf_file)
+        (x0, xn, n, n_div, div_coeff, print_div, print_hist, integration_method) = Proto.read_conf(self.conf_file)
         self.div_coeff = div_coeff
 
         t_span = [x0, xn]
@@ -119,7 +121,7 @@ class Proto:
         y0.append(self.contenitore)
 
         for i in range(n_div):
-            sol1 = solve_ivp(self.fn, t_span, y0, method="LSODA", events=[self.terminate, self.check_event])
+            sol1 = solve_ivp(self.fn, t_span, y0, method=integration_method, events=[self.terminate, self.check_event])
 
             n_step = sol1.y.shape[1]
             out = [s[n_step - 1] for s in sol1.y]
@@ -466,8 +468,12 @@ class Proto:
             div_coeff = int(riga.split()[4])
             print_division_file = int(riga.split()[5])
             print_history_file = int(riga.split()[6])
+            integration_method = riga.split()[7]
+            if integration_method not in METHODS.keys():
+                warnings.warn(f"Method {integration_method} not valid, switching by default to LSODA method", UserWarning)
+                integration_method = 'LSODA'
 
-            return x0, xn, n, n_div, div_coeff, print_division_file, print_history_file
+            return x0, xn, n, n_div, div_coeff, print_division_file, print_history_file, integration_method
 
     @staticmethod
     def sort_list(list):
