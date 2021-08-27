@@ -74,7 +74,7 @@ class Proto:
                 tipo = riga.split()[0]
                 vett_reazione = [el for el in riga.split()[1:] if el not in ("+", ">", ";", "/")]
 
-                # this is for optimization purpose, the part (36pi^1/3 / membrane) is constant through all the program
+                # this is for optimization purpose, the part (36pi^1/3 / membrane) is reaction_constant through all the program
                 if tipo == "210":
                     vett_reazione[2] = float(vett_reazione[2]) * pow(36 * pi, 1 / 3) / self.membrane_thickness
 
@@ -91,20 +91,27 @@ class Proto:
                         with open(filename) as f:
                             riga = f.readline()
                             t = float(riga.split()[1])
-                            const = dict()
+                            reaction_const = dict()
+                            species_concentration = dict()
                             f.readline()   #riga vuota
                             f.readline()   #riga intestazioni
 
                             for line in f:
+                                if line.split()[0] in self.specie:
+                                    specie_tipo = line.split()[0]
+                                    concentrazione = line.split()[1]
+                                    species_concentration[specie_tipo] = concentrazione
+                                    continue
                                 n_reazione = int(line.split()[0])
                                 if n_reazione > len(self.reazioni):
-                                    print(f"Numero di reazione non valido, le reazioni sono {len(self.reazioni)}")
+                                    warnings.warn(f"Numero di reazione non valido, le reazioni sono {len(self.reazioni)}", UserWarning)
                                     self.events = list()
                                     return
-                                const[n_reazione] = float(line.split()[1])
+                                reaction_const[n_reazione] = float(line.split()[1])
 
-                            evento = (t, const)
+                            evento = (t, reaction_const, species_concentration)
                             eventi.append(evento)
+                # files are not opened tidily, so the list needs to be ordered by the event time
                 self.events = Proto.sort_list(eventi)
                 print(self.events)
 
@@ -456,17 +463,21 @@ class Proto:
 
         if prev_t <= t_evento < self.t_abs:
             evento = self.events.pop(0)
-            self.apply_event(evento)
+            self.apply_event(evento, y)     # side-effect on y
             print("TRIGGER")
 
         return 0
     check_event.terminal = False
 
-    def apply_event(self, event):
-        for k, v in event[1].items():
-            if str(self.reazioni[k].tipo) == "210":
-                v = v * pow(36 * pi, 1 / 3) / self.membrane_thickness
-            self.reazioni[k].costante = v
+    # works by side-effect (specially on y)
+    def apply_event(self, event, y):
+        for n_reazione, const in event[1].items():
+            if str(self.reazioni[n_reazione].tipo) == "210":
+                const = const * pow(36 * pi, 1 / 3) / self.membrane_thickness
+            self.reazioni[n_reazione].costante = const
+
+        for s, concentration in event[2].items():
+            y[self.specie.index(s)] = concentration
 
     def calc_volume(self, lipidi):
         return (1000 / 6) * pi * pow(self.membrane_thickness, 3) * \

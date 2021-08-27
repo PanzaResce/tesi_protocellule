@@ -1,7 +1,7 @@
 t_abs	100
 
-n_reazione	costante
-1		1000.0
-3		1000
-6		1000
-8		1000
+n_reazione/specie	costante/concentrazione
+1			1000.0
+3			1000
+6			1000
+8			1000
