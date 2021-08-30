@@ -1,4 +1,5 @@
 import random
+import itertools
 
 
 class ChemGenerator:
@@ -64,7 +65,29 @@ class ChemGenerator:
         self.generate_chem()
 
     def generate_alphabet(self):
-        pass
+        """Generate all possible combinations of length L of X symbol
+        L = self.specie_max_length
+        X = self.alphabet_card
+        The symbols are later converted from numbers to letters
+        """
+        combs = set()
+        symbols = list(range(self.alphabet_card))
+
+        for sub_length in range(1, self.specie_max_length+1):
+            output = itertools.combinations_with_replacement(symbols, sub_length)
+
+            for vett in output:
+                combs.add(vett)
+                all_combs = itertools.permutations(vett)
+                for el in all_combs:
+                    combs.add(el)
+
+        self.specie_pool = list(map(ChemGenerator.number_to_letter, combs))
+
+        print(len(self.specie_pool))
+
+        for el in self.specie_pool:
+            print(el)
 
     def generate_reactions(self):
         pass
@@ -76,6 +99,14 @@ class ChemGenerator:
         self.generate_alphabet()
         self.generate_reactions()
         self.generate_file()
+
+    @staticmethod
+    def number_to_letter(el):
+        """Convert a number to the corresponding letter (0 -> A, 1 -> B, 2 -> C, ...)"""
+        out = list()
+        for i in range(len(el)):
+            out.append(chr(ord('A') + el[i]))
+        return out
 
 
 if __name__ == "__main__":
