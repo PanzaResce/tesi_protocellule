@@ -16,6 +16,9 @@ class ChemGenerator:
 
         with open(self.conf_file) as f:
             riga = f.readline()
+            self.file_output = riga.split()[0]+".txt"
+
+            riga = f.readline()
             self.seed = int(riga.split()[0])
             random.seed(self.seed)
 
@@ -97,7 +100,7 @@ class ChemGenerator:
 
         # generate membrane passage reaction
         for el in self.specie_pool:
-            if el.inter is not None and el.inter[1]:
+            if el.inter is not None and el.inter["boundary"]:
                 (reagenti, prodotti, costante) = self.make_reaction(210, el)
                 reaction = [reagenti, prodotti, costante]
                 self.reactions.append(reazione(210, reaction))
@@ -117,7 +120,28 @@ class ChemGenerator:
         # print(len(self.reactions))
 
     def generate_file(self):
-        pass
+        with open(self.file_output, "w") as f:
+            f.write(f"num_specie\t{len(self.specie_pool)}\n")
+            f.write(f"num_reac\t{len(self.reactions)}\n")
+            f.write(f"memb_thick\t{self.membrane_thickness}\n")
+            f.write(f"cont_rad\t{self.radius}\n")
+            f.write(f"density \t{self.density}\n")
+            f.write("\n")
+
+            for s in self.specie_pool:
+                if s.inter is not None:
+                    inter = str([v for k, v in s.inter.items()]).replace(",", "\t").replace("[", "").replace("]", "")
+                else:
+                    inter = "0\t0"
+                f.write(f"{s.nome}\t{s.qnt}\t{inter}\n")
+
+            f.write("\n")
+
+            for r in self.reactions:
+                f.write(str(r.tipo) + "\t" +
+                        str(r.reagenti).replace(",", " +").replace("[", "").replace("]", "").replace("'", "") + " > " +
+                        str(r.prodotti).replace(",", " +").replace("[", "").replace("]", "").replace("'", "") + " ; " +
+                        str(r.costante) + "\n")
 
     def generate_chem(self):
         self.generate_alphabet()
@@ -153,7 +177,7 @@ class ChemGenerator:
             'constant': the reaction constant
         """
         if reaction_type == 23 or reaction_type == 32:
-            s = random.choice([el for el in self.specie_pool if len(el.nome) >= 2]).nome
+            s = random.choice([el for el in self.specie_pool if len(el.nome) >= 2 and "ext" not in el.nome]).nome
             catalyst = random.choice(self.catalyst_pool).nome
 
             cut_point = random.randint(1, len(s)-1)

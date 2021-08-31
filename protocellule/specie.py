@@ -1,8 +1,8 @@
 class specie:
 
     def __init__(self, nome, q, inter=None):
-        ''' When inter = None it means that the species
-        is involved in a reaction '''
+        """When inter = None it means that the species
+        is involved in a reaction """
 
         self.nome = nome
         self.qnt = float(q)
@@ -16,7 +16,7 @@ class specie:
             if len(inter) != len(self.inter.keys()):
                 raise AttributeError(f"Wrong format, the interaction must be {len(self.inter.keys())}")
 
-            if isinstance(inter, list):
+            if isinstance(inter, list) or isinstance(inter, tuple):
                 for index, key in enumerate(self.inter.keys()):
                     self.inter[key] = float(inter[index])
             else:

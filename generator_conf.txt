@@ -1,3 +1,4 @@
+chem_gen	//nome file output
 34519256	//seme random
 5		//massima lunghezza
 2		//cardinalità alfabeto
