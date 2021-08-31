@@ -97,11 +97,13 @@ class Proto:
                             f.readline()   #riga intestazioni
 
                             for line in f:
+                                # if it's a concentration change event
                                 if line.split()[0] in self.specie:
                                     specie_tipo = line.split()[0]
                                     concentrazione = line.split()[1]
-                                    species_concentration[specie_tipo] = concentrazione
+                                    species_concentration[specie_tipo] = float(concentrazione)
                                     continue
+                                # if it's a reaction constant change event
                                 n_reazione = int(line.split()[0])
                                 if n_reazione > len(self.reazioni):
                                     warnings.warn(f"Numero di reazione non valido, le reazioni sono {len(self.reazioni)}", UserWarning)
@@ -155,6 +157,16 @@ class Proto:
 
             out[-1] = new_qnt
             out[-2] = new_qnt
+
+            # # apply events here
+            for ev in self.events:
+                if ev[0] <= self.t_abs:
+                    self.apply_event(ev, out)     # side-effect on out
+                    print("TRIGGER")
+
+            # delete happened event
+            self.events = [ev for ev in self.events if ev[0] > self.t_abs]
+
             y0 = out
 
         print("END")
@@ -455,16 +467,16 @@ class Proto:
                 prev_t = float("inf")
             self.t_hist.append(self.t_abs)
 
-        if len(self.events) <= 0:
-            return 0
+        # if len(self.events) <= 0:
+        #     return 0
 
         # il primo elemento è il prossimo evento che deve avvenire
-        t_evento = self.events[0][0]
-
-        if prev_t <= t_evento < self.t_abs:
-            evento = self.events.pop(0)
-            self.apply_event(evento, y)     # side-effect on y
-            print("TRIGGER")
+        # t_evento = self.events[0][0]
+        #
+        # if prev_t <= t_evento < self.t_abs:
+        #     evento = self.events.pop(0)
+        #     self.apply_event(evento, y)     # side-effect on y
+        #     print("TRIGGER")
 
         return 0
     check_event.terminal = False
