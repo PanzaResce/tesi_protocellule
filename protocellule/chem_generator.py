@@ -70,6 +70,12 @@ class ChemGenerator:
         # chem generation
         self.generate_chem()
 
+    def generate_chem(self):
+        self.generate_alphabet()
+        self.generate_reactions()
+        self.delete_species()
+        self.generate_file()
+
     def generate_alphabet(self):
         """Generate all possible combinations of length L of X symbol
         L = self.specie_max_length
@@ -119,9 +125,22 @@ class ChemGenerator:
 
         # print(len(self.reactions))
 
+    # Monkey patch
+    def delete_species(self):
+        """Delete species which not appears in any reaction
+        Monkey path the attribute useless on the 'specie' object
+        """
+        for s in self.specie_pool:
+            useless = True
+            for r in self.reactions:
+                if s.nome in r.prodotti or s.nome in r.reagenti:
+                    useless = False
+                    break
+            s.useless = useless
+
     def generate_file(self):
         with open(self.file_output, "w") as f:
-            f.write(f"num_specie\t{len(self.specie_pool)}\n")
+            f.write(f"num_specie\t{sum([1 for s in self.specie_pool if not s.useless])}\n")
             f.write(f"num_reac\t{len(self.reactions)}\n")
             f.write(f"memb_thick\t{self.membrane_thickness}\n")
             f.write(f"cont_rad\t{self.radius}\n")
@@ -129,11 +148,12 @@ class ChemGenerator:
             f.write("\n")
 
             for s in self.specie_pool:
-                if s.inter is not None:
-                    inter = str([v for k, v in s.inter.items()]).replace(",", "\t").replace("[", "").replace("]", "")
-                else:
-                    inter = "0\t0"
-                f.write(f"{s.nome}\t{s.qnt}\t{inter}\n")
+                if not s.useless:
+                    if s.inter is not None:
+                        inter = str([v for k, v in s.inter.items()]).replace(",", "\t").replace("[", "").replace("]", "")
+                    else:
+                        inter = "0\t0"
+                    f.write(f"{s.nome}\t{s.qnt}\t{inter}\n")
 
             f.write("\n")
 
@@ -142,11 +162,6 @@ class ChemGenerator:
                         str(r.reagenti).replace(",", " +").replace("[", "").replace("]", "").replace("'", "") + " > " +
                         str(r.prodotti).replace(",", " +").replace("[", "").replace("]", "").replace("'", "") + " ; " +
                         str(r.costante) + "\n")
-
-    def generate_chem(self):
-        self.generate_alphabet()
-        self.generate_reactions()
-        self.generate_file()
 
     def letter_to_specie(self, symbol_list):
         """Convert all symbls to the corresponding specie using the 'specie' Class
