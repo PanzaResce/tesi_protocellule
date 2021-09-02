@@ -99,6 +99,8 @@ class ChemGenerator:
         self.specie_pool = self.letter_to_specie(symbol_list)
         self.fill_catalyst()    # side-effect on self.catalyst_pool
 
+        self.specie_pool.sort()
+
         # for el in self.specie_pool:
         #     print(el)
 
