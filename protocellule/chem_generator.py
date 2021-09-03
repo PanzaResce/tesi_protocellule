@@ -175,7 +175,7 @@ class ChemGenerator:
                 out.append(specie(s, self.init_specie_concentration))
             else:
                 # add specie passing the membrane and the corresponding buffered external specie
-                out.append(specie(s, self.init_specie_concentration, (0, 1)))
+                out.append(specie(s, self.init_specie_concentration, (0, 0)))
                 out.append(specie(s+"ext", self.default_buffered_specie[s], (1, 0)))
         return out
 
