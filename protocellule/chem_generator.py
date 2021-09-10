@@ -50,6 +50,9 @@ class ChemGenerator:
             self.coeff_condensation = int(riga.split()[0])
 
             riga = f.readline()
+            self.bimolecular = bool(riga.split()[0])
+
+            riga = f.readline()
             self.coeff_membrane = float(riga.split()[0])
 
             riga = f.readline()
@@ -123,11 +126,20 @@ class ChemGenerator:
             (reagenti, prodotti, costante) = self.make_reaction(32)
             reaction = list(reagenti + prodotti)
             reaction.append(costante)
-            self.reactions.append(reazione(32, reaction))
+            r = reazione(32, reaction)
+            if self.bimolecular:
 
-        # print(len(self.reactions))
+                (complex, l_reaction) = self.tri_to_duo(r)
 
-    # Monkey patch
+                # add complex specie to pool
+                self.specie_pool.append(specie(complex, 0, (0, 0)))
+
+                for l in l_reaction:
+                    self.reactions.append(l)
+            else:
+                self.reactions.append(reazione(32, reaction))
+
+    # Monkey patch on specie object
     def delete_species(self):
         """Delete species which not appears in any reaction
         Monkey path the attribute useless on the 'specie' object
@@ -219,6 +231,27 @@ class ChemGenerator:
             prod_name = ''.join(buff_s.nome.rsplit('ext', 1))
             prod = self.specie_pool[self.specie_pool.index(prod_name)]
             return buff_s.nome, prod.nome, self.coeff_membrane
+
+    def tri_to_duo(self, tri_reaction):
+        """Return the duo corresponding reaction of a tri reaction
+        This method make sense only for condensation reaction and it returns three reaction object
+        """
+        if tri_reaction.tipo != 32:
+            return tri_reaction
+
+        catalyst = tri_reaction.reagenti[-1]
+        first_substr = tri_reaction.reagenti[0]
+        second_substr = tri_reaction.reagenti[1]
+
+        complex = '*' + first_substr + catalyst
+        while complex in self.specie_pool:
+            complex = '*' + complex
+
+        first_r = reazione(21, (first_substr, catalyst, complex, self.coeff_condensation/10))
+        second_r = reazione(12, (complex, first_substr, catalyst, 14.86))
+        third_r = reazione(22, (complex, second_substr, tri_reaction.prodotti[0], catalyst, self.coeff_condensation/20))
+
+        return complex, (first_r, second_r, third_r)
 
     @staticmethod
     def number_to_letter(el):

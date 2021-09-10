@@ -32,7 +32,7 @@ class reazione:
             self.reagenti = [reazione[0], reazione[1]]
             self.prodotti = [reazione[2], reazione[3], reazione[4]]
             self.costante = float(reazione[5])
-        elif self.tipo == 32:   # cleavage inverso
+        elif self.tipo == 32:   # condensazione
             self.reagenti = [reazione[0], reazione[1], reazione[2]]
             self.prodotti = [reazione[3], reazione[4]]
             self.costante = float(reazione[5])
