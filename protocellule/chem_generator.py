@@ -107,9 +107,9 @@ class ChemGenerator:
     def generate_reactions(self):
 
         # generate membrane passage reaction
-        for el in self.specie_pool:
-            if el.inter is not None and el.inter["boundary"]:
-                (reagenti, prodotti, costante) = self.make_reaction(210, el)
+        for s in self.specie_pool:
+            if s.inter is not None and s.inter["bufferizzata"]:
+                (reagenti, prodotti, costante) = self.make_reaction(210, s)
                 reaction = [reagenti, prodotti, costante]
                 self.reactions.append(reazione(210, reaction))
 
@@ -166,16 +166,16 @@ class ChemGenerator:
                         str(r.costante) + "\n")
 
     def letter_to_specie(self, symbol_list):
-        """Convert all symbls to the corresponding specie using the 'specie' Class
-        The function also adds the buffered specie based on the 'default_buffered_specie'
+        """Convert all symbols to the corresponding specie using the 'specie' Class
+        The function also adds the buffered specie based on 'default_buffered_specie'
         """
         out = list()
         for s in symbol_list:
             if s not in self.default_buffered_specie.keys():
-                out.append(specie(s, self.init_specie_concentration))
+                out.append(specie(s, self.init_specie_concentration, (0, 0.01)))
             else:
                 # add specie passing the membrane and the corresponding buffered external specie
-                out.append(specie(s, self.init_specie_concentration, (0, 0)))
+                out.append(specie(s, self.init_specie_concentration, (0, 0.01)))
                 out.append(specie(s+"ext", self.default_buffered_specie[s], (1, 0)))
         return out
 
@@ -186,8 +186,12 @@ class ChemGenerator:
             if self.catalyst_min_length <= len(el.nome) <= self.catalyst_max_length:
                 self.catalyst_pool.append(el)
 
-    def make_reaction(self, reaction_type, el=None):
+    def make_reaction(self, reaction_type, buff_s=None):
         """Generate a random reaction
+        Parameters:
+            'reaction_type': number that specify the type of reaction
+            'buff_s': specie object that is needed only to generate the membrane passage reaction
+                      this is always a 'buffered' specie (the ones ending with 'ext')
         Returns a tuple of 3 element:
             'reagent': a tuple containing the names of the reagents
             'products': a tuple containing the names of the products
@@ -211,9 +215,10 @@ class ChemGenerator:
                 return (first_part, second_part, catalyst), (s, catalyst), self.coeff_condensation
 
         # membrane passage
-        if reaction_type == 210 and el is not None:
-            reagent = self.specie_pool[self.specie_pool.index(el.nome+"ext")]
-            return reagent.nome, el.nome, self.coeff_membrane
+        if reaction_type == 210 and buff_s is not None:
+            prod_name = ''.join(buff_s.nome.rsplit('ext', 1))
+            prod = self.specie_pool[self.specie_pool.index(prod_name)]
+            return buff_s.nome, prod.nome, self.coeff_membrane
 
     @staticmethod
     def number_to_letter(el):
