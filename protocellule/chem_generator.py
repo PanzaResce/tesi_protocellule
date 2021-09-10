@@ -210,7 +210,7 @@ class ChemGenerator:
             'constant': the reaction constant
         """
         if reaction_type == 23 or reaction_type == 32:
-            s = random.choice([el for el in self.specie_pool if len(el.nome) >= 2 and "ext" not in el.nome]).nome
+            s = random.choice([el for el in self.specie_pool if len(el.nome) >= 2 and "ext" not in el.nome and "*" not in el.nome]).nome
             catalyst = random.choice(self.catalyst_pool).nome
 
             cut_point = random.randint(1, len(s)-1)
