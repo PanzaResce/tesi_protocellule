@@ -223,7 +223,7 @@ class ChemGenerator:
     def fill_catalyst(self):
         """Fill the catalyst_pool by looking at specie_pool and catalyst_min/max_length"""
         for el in self.specie_pool:
-            if self.catalyst_min_length <= len(el.nome) <= self.catalyst_max_length:
+            if (self.catalyst_min_length <= len(el.nome) <= self.catalyst_max_length) and "ext" not in el.nome and "*" not in el.nome:
                 self.catalyst_pool.append(el)
 
     def make_reaction(self, reaction_type, buff_s=None):
