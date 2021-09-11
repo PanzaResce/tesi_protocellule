@@ -10,6 +10,7 @@ chem_gen	//nome file output
 1000		//coefficiente diretto per cleavage  
 20000		//coefficiente diretto per condensazione
 1		//genera reazioni bi-molecolari
+1		//genera reazioni simmetriche
 8e-17		//coefficiente per passaggio membrana
 1e-08		//spessore membrana in metri
 1e-06		//raggio iniziale contenitore sferico in metri

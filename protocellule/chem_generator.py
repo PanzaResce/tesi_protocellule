@@ -14,6 +14,10 @@ class ChemGenerator:
         self.catalyst_pool = list()
         self.reactions = list()
 
+        self.symm_specie_pool = list()
+        self.symm_reactions = list()
+
+
         with open(self.conf_file) as f:
             riga = f.readline()
             self.file_output = riga.split()[0]+".txt"
@@ -53,6 +57,9 @@ class ChemGenerator:
             self.bimolecular = bool(riga.split()[0])
 
             riga = f.readline()
+            self.symmetric = bool(riga.split()[0])
+
+            riga = f.readline()
             self.coeff_membrane = float(riga.split()[0])
 
             riga = f.readline()
@@ -76,8 +83,12 @@ class ChemGenerator:
     def generate_chem(self):
         self.generate_alphabet()
         self.generate_reactions()
-        self.delete_species()
-        self.generate_file()
+
+        self.delete_species(self.specie_pool, self.reactions)
+        self.delete_species(self.symm_specie_pool, self.symm_reactions)
+
+        self.generate_file(self.file_output, self.specie_pool, self.reactions)
+        self.generate_file("SYMM_"+self.file_output, self.symm_specie_pool, self.symm_reactions)
 
     def generate_alphabet(self):
         """Generate all possible combinations of length L of X symbol
@@ -122,11 +133,25 @@ class ChemGenerator:
             reaction.append(costante)
             self.reactions.append(reazione(23, reaction))
 
+        if self.symmetric:
+            self.symm_specie_pool = self.specie_pool.copy()
+            self.symm_reactions = self.reactions.copy()
+
         for i in range(self.n_condensation):
             (reagenti, prodotti, costante) = self.make_reaction(32)
             reaction = list(reagenti + prodotti)
             reaction.append(costante)
             r = reazione(32, reaction)
+
+            if self.symmetric:
+                (l_complex, l_reaction) = self.tri_to_duo(r, True)
+
+                for c in l_complex:
+                    self.symm_specie_pool.append(specie(c, 0, (0, 0)))
+
+                for l in l_reaction:
+                    self.symm_reactions.append(l)
+
             if self.bimolecular:
 
                 (complex, l_reaction) = self.tri_to_duo(r)
@@ -140,28 +165,28 @@ class ChemGenerator:
                 self.reactions.append(reazione(32, reaction))
 
     # Monkey patch on specie object
-    def delete_species(self):
+    def delete_species(self, specie_pool, reactions):
         """Delete species which not appears in any reaction
-        Monkey path the attribute useless on the 'specie' object
+        Monkey patch the attribute useless on the 'specie' object
         """
-        for s in self.specie_pool:
+        for s in specie_pool:
             useless = True
-            for r in self.reactions:
+            for r in reactions:
                 if s.nome in r.prodotti or s.nome in r.reagenti:
                     useless = False
                     break
             s.useless = useless
 
-    def generate_file(self):
-        with open(self.file_output, "w") as f:
-            f.write(f"num_specie\t{sum([1 for s in self.specie_pool if not s.useless])}\n")
-            f.write(f"num_reac\t{len(self.reactions)}\n")
+    def generate_file(self, filename, specie_pool, reactions):
+        with open(filename, "w") as f:
+            f.write(f"num_specie\t{sum([1 for s in specie_pool if not s.useless])}\n")
+            f.write(f"num_reac\t{len(reactions)}\n")
             f.write(f"memb_thick\t{self.membrane_thickness}\n")
             f.write(f"cont_rad\t{self.radius}\n")
             f.write(f"density \t{self.density}\n")
             f.write("\n")
 
-            for s in self.specie_pool:
+            for s in specie_pool:
                 if not s.useless:
                     if s.inter is not None:
                         inter = str([v for k, v in s.inter.items()]).replace(",", "\t").replace("[", "").replace("]", "")
@@ -171,7 +196,7 @@ class ChemGenerator:
 
             f.write("\n")
 
-            for r in self.reactions:
+            for r in reactions:
                 f.write(str(r.tipo) + "\t" +
                         str(r.reagenti).replace(",", " +").replace("[", "").replace("]", "").replace("'", "") + " > " +
                         str(r.prodotti).replace(",", " +").replace("[", "").replace("]", "").replace("'", "") + " ; " +
@@ -232,9 +257,12 @@ class ChemGenerator:
             prod = self.specie_pool[self.specie_pool.index(prod_name)]
             return buff_s.nome, prod.nome, self.coeff_membrane
 
-    def tri_to_duo(self, tri_reaction):
-        """Return the duo corresponding reaction of a tri reaction
-        This method make sense only for condensation reaction and it returns three reaction object
+    def tri_to_duo(self, tri_reaction, simm=False):
+        """Return the duo corresponding reaction of a tri reaction and the complex
+        This method make sense only for condensation reaction and it returns a list with three reaction object
+        Parameters:
+            tri_reaction: the tri-reaction list
+            simm: True if it's needed to generate the simmetric reactions
         """
         if tri_reaction.tipo != 32:
             return tri_reaction
@@ -251,7 +279,26 @@ class ChemGenerator:
         second_r = reazione(12, (complex, first_substr, catalyst, 14.86))
         third_r = reazione(22, (complex, second_substr, tri_reaction.prodotti[0], catalyst, self.coeff_condensation/20))
 
-        return complex, (first_r, second_r, third_r)
+        if simm:
+            f_complex = '*' + first_substr + catalyst
+            while f_complex in self.symm_specie_pool:
+                f_complex = '*' + f_complex
+
+            s_complex = '*' + second_substr + catalyst
+            while s_complex in self.symm_specie_pool:
+                s_complex = '*' + s_complex
+
+            first_r = reazione(21, (first_substr, catalyst, f_complex, self.coeff_condensation / 10))
+            second_r = reazione(12, (f_complex, first_substr, catalyst, 14.86))
+            third_r = reazione(22, (f_complex, second_substr, tri_reaction.prodotti[0], catalyst, self.coeff_condensation / 20))
+
+            symm_first_r = reazione(21, (second_substr, catalyst, s_complex, self.coeff_condensation / 10))
+            symm_second_r = reazione(12, (s_complex, second_substr, catalyst, 14.86))
+            symm_third_r = reazione(22, (s_complex, first_substr, tri_reaction.prodotti[0], catalyst, self.coeff_condensation / 20))
+
+            return (f_complex, s_complex), (first_r, second_r, third_r, symm_first_r, symm_second_r, symm_third_r)
+        else:
+            return complex, (first_r, second_r, third_r)
 
     @staticmethod
     def number_to_letter(el):
