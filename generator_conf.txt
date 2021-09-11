@@ -1,0 +1,25 @@
+chem_gen	//nome file output
+34519256	//seme random
+5		//massima lunghezza
+2		//cardinalità alfabeto
+3		//minima lunghezza catalizzatori
+3		//massima lunghezza catalizzatori
+20		//numero condensazioni    (esempio condensazione: 32 AA + B + BB > AAB + BB)
+20		//numero cleavage         (esempio cleavage:      23 AAB + AA > A + AB + AA)
+0.01		//concentrazione iniziale specie chimiche  
+1000		//coefficiente diretto per cleavage  
+20000		//coefficiente diretto per condensazione
+1		//genera reazioni bi-molecolari
+1		//genera reazioni simmetriche
+8e-17		//coefficiente per passaggio membrana
+1e-08		//spessore membrana in metri
+1e-06		//raggio iniziale contenitore sferico in metri
+2635.778 	//densita molecolare contenitore in mol/m^3
+
+Elenco specie che attraversano la membrana (con in più la concentrazione delle specie esterne)
+A    0.01
+B    0.01
+AA   0.01
+AB   0.01
+BA   0.01
+BB   0.01
