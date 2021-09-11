@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 from scipy.integrate._ivp.ivp import METHODS
 from math import pi
+from protocellule import scipy_patch
 from protocellule.specie import specie
 from protocellule.reazione import reazione
 
@@ -184,12 +185,12 @@ class Proto:
         print(f"{len(self.events)} eventi non avvenuti")
 
     def fn(self, arr_t, specie):
-        """ Restituisce un vettore che indica la variazione delle
-         nuove quantità a seguito delle reazioni
-         t: lista
-            t[0] : istante di tempo attuale
-            t[1] : dt
-         specie : lista che contiene le quantità delle specie
+        """ Restituisce un vettore che indica la variazione delle nuove concentrazioni a seguito delle reazioni
+         Parametri:
+             t: lista
+                t[0] : istante di tempo attuale
+                t[1] : dt
+             specie : lista che contiene le concentrazioni delle specie
          """
 
         # if t > self.dt[1]:
@@ -201,7 +202,7 @@ class Proto:
         try:
             t = arr_t[0]
             dt = arr_t[1]
-        except TypeError:
+        except (TypeError, IndexError):
             t = arr_t
             dt = 1
 

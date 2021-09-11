@@ -17,7 +17,6 @@ class ChemGenerator:
         self.symm_specie_pool = list()
         self.symm_reactions = list()
 
-
         with open(self.conf_file) as f:
             riga = f.readline()
             self.file_output = riga.split()[0]+".txt"
@@ -119,7 +118,12 @@ class ChemGenerator:
         #     print(el)
 
     def generate_reactions(self):
-
+        """Generate random reactions
+        The type of reactions are:
+            210: membrane passage
+            23: cleavage
+            32: condensation
+        """
         # generate membrane passage reaction
         for s in self.specie_pool:
             if s.inter is not None and s.inter["bufferizzata"]:
@@ -153,7 +157,6 @@ class ChemGenerator:
                     self.symm_reactions.append(l)
 
             if self.bimolecular:
-
                 (complex, l_reaction) = self.tri_to_duo(r)
 
                 # add complex specie to pool
@@ -167,7 +170,7 @@ class ChemGenerator:
     # Monkey patch on specie object
     def delete_species(self, specie_pool, reactions):
         """Delete species which not appears in any reaction
-        Monkey patch the attribute useless on the 'specie' object
+        Monkey patch the attribute 'useless' on the 'specie' object
         """
         for s in specie_pool:
             useless = True
@@ -257,12 +260,12 @@ class ChemGenerator:
             prod = self.specie_pool[self.specie_pool.index(prod_name)]
             return buff_s.nome, prod.nome, self.coeff_membrane
 
-    def tri_to_duo(self, tri_reaction, simm=False):
+    def tri_to_duo(self, tri_reaction, symm=False):
         """Return the duo corresponding reaction of a tri reaction and the complex
         This method make sense only for condensation reaction and it returns a list with three reaction object
         Parameters:
             tri_reaction: the tri-reaction list
-            simm: True if it's needed to generate the simmetric reactions
+            symm: True if it's needed to generate the symmetric reactions
         """
         if tri_reaction.tipo != 32:
             return tri_reaction
@@ -279,7 +282,7 @@ class ChemGenerator:
         second_r = reazione(12, (complex, first_substr, catalyst, 14.86))
         third_r = reazione(22, (complex, second_substr, tri_reaction.prodotti[0], catalyst, self.coeff_condensation/20))
 
-        if simm:
+        if symm:
             f_complex = '*' + first_substr + catalyst
             while f_complex in self.symm_specie_pool:
                 f_complex = '*' + f_complex
