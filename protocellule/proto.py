@@ -368,7 +368,7 @@ class Proto:
 
         self.history += local_history
 
-        file = self.chem_file.split(".")[0] + f"_gen{gen}_out.txt"
+        file = self.chem_file.split(".")[0] + f"_gen{gen}_out.part.txt"
         self.print_full_history_to_file(file, local_history)
 
     def print_final_info(self):
@@ -380,11 +380,10 @@ class Proto:
         if len(self.division_history) != 0:
             self.print_division_file()
             self.print_division_graph()
-        plt.show()
 
         # clear intermediate generation's file
         for file in os.listdir(self.output_dir):
-            if re.search(r".*gen\d+_out\.txt$", file):
+            if re.search(r".*gen\d+_out\.part\.txt$", file):
                 os.remove(os.path.join(self.output_dir, file))
 
     def print_full_history_to_file(self, filename, dict):
@@ -410,6 +409,8 @@ class Proto:
         plt.xlabel('time (s)')
 
         plt.legend()
+        plt.yscale('log')
+        plt.ylim(bottom=1e-10)
         # plt.show()
 
     def print_division_file(self):
@@ -439,6 +440,8 @@ class Proto:
         plt.xlabel('n. divisioni')
 
         plt.legend()
+        plt.yscale('log')
+        plt.ylim(bottom=1e-10)
         # plt.show()
 
     def terminate(self, t, y):
