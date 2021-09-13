@@ -53,10 +53,10 @@ class ChemGenerator:
             self.coeff_condensation = int(riga.split()[0])
 
             riga = f.readline()
-            self.bimolecular = bool(riga.split()[0])
+            self.bimolecular = bool(int(riga.split()[0]))
 
             riga = f.readline()
-            self.symmetric = bool(riga.split()[0])
+            self.symmetric = bool(int(riga.split()[0]))
 
             riga = f.readline()
             self.coeff_membrane = float(riga.split()[0])
