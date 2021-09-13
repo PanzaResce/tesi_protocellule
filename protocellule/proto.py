@@ -380,6 +380,7 @@ class Proto:
         if len(self.division_history) != 0:
             self.print_division_file()
             self.print_division_graph()
+        plt.show()
 
         # clear intermediate generation's file
         for file in os.listdir(self.output_dir):
