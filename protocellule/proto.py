@@ -88,7 +88,7 @@ class Proto:
                 eventi = list()
                 for filename in os.scandir("./eventi"):
                     if filename.is_file():
-                        print(filename.path)
+                        # print(filename.path)
                         with open(filename) as f:
                             riga = f.readline()
                             t = float(riga.split()[1])
@@ -159,11 +159,11 @@ class Proto:
             out[-1] = new_qnt
             out[-2] = new_qnt
 
-            # # apply events here
+            # apply events here
             for ev in self.events:
                 if ev[0] <= self.t_abs:
                     self.apply_event(ev, out)     # side-effect on out
-                    print("TRIGGER")
+                    print(f"TRIGGER: {len(self.events)-1} events remaining")
 
             # delete happened event
             self.events = [ev for ev in self.events if ev[0] > self.t_abs]
