@@ -6,8 +6,8 @@ from scipy.integrate import solve_ivp
 from scipy.integrate._ivp.ivp import METHODS
 from math import pi
 from protocellule import scipy_patch
-from protocellule.specie import specie
-from protocellule.reazione import reazione
+from protocellule.specie import Specie
+from protocellule.reazione import Reazione
 
 
 class Proto:
@@ -54,7 +54,7 @@ class Proto:
             riga = f.readline()
             self.density = float(riga.split()[1])
 
-            # quantità iniziale lipide (mol) = densità * volume membrana
+            # quantità iniziale lipide (mol) = densità * volume membrana (in metri cubi)
             self.contenitore = self.density * ((4/3)*pi*pow(radius + self.membrane_thickness, 3) - self.volume*0.001)
 
             f.readline()    #riga vuota
@@ -62,7 +62,7 @@ class Proto:
             # Lettura specie --> nome, quantità, proprietà
             for i in range(self.n_specie):
                 riga = f.readline()
-                s = specie(riga.split()[0], riga.split()[1], riga.split()[2:])
+                s = Specie(riga.split()[0], riga.split()[1], riga.split()[2:])
 
                 self.specie.append(s)
 
@@ -79,7 +79,7 @@ class Proto:
                 if tipo == "210":
                     vett_reazione[2] = float(vett_reazione[2]) * pow(36 * pi, 1 / 3) / self.membrane_thickness
 
-                self.reazioni.append(reazione(tipo, vett_reazione))
+                self.reazioni.append(Reazione(tipo, vett_reazione))
 
             # Lettura eventi
             res = input("La simulazione prevede degli eventi? (y/n)\n")
@@ -181,7 +181,7 @@ class Proto:
         #             c+=1
         # print(f"Errori: {c}")
 
-        #Test
+        # Test
         print(f"{len(self.events)} eventi non avvenuti")
 
     def fn(self, arr_t, specie):
@@ -213,14 +213,13 @@ class Proto:
 
         delta = [0] * len(specie)
 
-        if t != 0:
-            v_rapp = Vv / self.volume
+        # if t != 0:
+        v_rapp = Vv / self.volume
 
-            # ricalcolo concentrazioni sostanze con rapporto (volume vecchio / volume nuovo)
-            for idx, s in enumerate(specie):
-                # if idx != len(specie)-1 and bool(self.specie[idx].inter["bufferizzata"]) is not True:
-                if idx != len(specie)-1 and idx != len(specie)-2 and bool(self.specie[idx].inter["bufferizzata"]) is not True:
-                    delta[idx] -= specie[idx]*(1-v_rapp) / dt
+        # ricalcolo concentrazioni sostanze con rapporto (volume vecchio / volume nuovo)
+        for idx, s in enumerate(specie):
+            if idx != len(specie)-1 and idx != len(specie)-2 and bool(self.specie[idx].inter["bufferizzata"]) is not True:
+                delta[idx] -= specie[idx]*(1-v_rapp) / dt
 
         # applico le reazioni
         for i in range(self.n_reazioni):
@@ -324,6 +323,7 @@ class Proto:
                 print("ALLARME FN: ", self.reazioni[i].tipo)
                 exit()
 
+        # azzeramento variazione delle specie bufferizzate
         for s in self.specie:
             if bool(s.inter["bufferizzata"]) is True:
                 delta[self.specie.index(s.nome)] = 0

@@ -1,7 +1,7 @@
 import random
 import itertools
-from protocellule.specie import specie
-from protocellule.reazione import reazione
+from protocellule.specie import Specie
+from protocellule.reazione import Reazione
 
 
 class ChemGenerator:
@@ -129,13 +129,13 @@ class ChemGenerator:
             if s.inter is not None and s.inter["bufferizzata"]:
                 (reagenti, prodotti, costante) = self.make_reaction(210, s)
                 reaction = [reagenti, prodotti, costante]
-                self.reactions.append(reazione(210, reaction))
+                self.reactions.append(Reazione(210, reaction))
 
         for i in range(self.n_cleavage):
             (reagenti, prodotti, costante) = self.make_reaction(23)
             reaction = list(reagenti + prodotti)
             reaction.append(costante)
-            self.reactions.append(reazione(23, reaction))
+            self.reactions.append(Reazione(23, reaction))
 
         if self.symmetric:
             self.symm_specie_pool = self.specie_pool.copy()
@@ -145,13 +145,13 @@ class ChemGenerator:
             (reagenti, prodotti, costante) = self.make_reaction(32)
             reaction = list(reagenti + prodotti)
             reaction.append(costante)
-            r = reazione(32, reaction)
+            r = Reazione(32, reaction)
 
             if self.symmetric:
                 (l_complex, l_reaction) = self.tri_to_duo(r, True)
 
                 for c in l_complex:
-                    self.symm_specie_pool.append(specie(c, 0, (0, 0)))
+                    self.symm_specie_pool.append(Specie(c, 0, (0, 0)))
 
                 for l in l_reaction:
                     self.symm_reactions.append(l)
@@ -160,12 +160,12 @@ class ChemGenerator:
                 (complex, l_reaction) = self.tri_to_duo(r)
 
                 # add complex specie to pool
-                self.specie_pool.append(specie(complex, 0, (0, 0)))
+                self.specie_pool.append(Specie(complex, 0, (0, 0)))
 
                 for l in l_reaction:
                     self.reactions.append(l)
             else:
-                self.reactions.append(reazione(32, reaction))
+                self.reactions.append(Reazione(32, reaction))
 
     # Monkey patch on specie object
     def delete_species(self, specie_pool, reactions):
@@ -212,11 +212,11 @@ class ChemGenerator:
         out = list()
         for s in symbol_list:
             if s not in self.default_buffered_specie.keys():
-                out.append(specie(s, self.init_specie_concentration, (0, 0.01)))
+                out.append(Specie(s, self.init_specie_concentration, (0, 0.01)))
             else:
                 # add specie passing the membrane and the corresponding buffered external specie
-                out.append(specie(s, self.init_specie_concentration, (0, 0.01)))
-                out.append(specie(s+"ext", self.default_buffered_specie[s], (1, 0)))
+                out.append(Specie(s, self.init_specie_concentration, (0, 0.01)))
+                out.append(Specie(s+"ext", self.default_buffered_specie[s], (1, 0)))
         return out
 
     # works by side-effect on self.catalyst_pool
@@ -278,9 +278,9 @@ class ChemGenerator:
         while complex in self.specie_pool:
             complex = '*' + complex
 
-        first_r = reazione(21, (first_substr, catalyst, complex, self.coeff_condensation/10))
-        second_r = reazione(12, (complex, first_substr, catalyst, 14.86))
-        third_r = reazione(22, (complex, second_substr, tri_reaction.prodotti[0], catalyst, self.coeff_condensation/20))
+        first_r = Reazione(21, (first_substr, catalyst, complex, self.coeff_condensation/10))
+        second_r = Reazione(12, (complex, first_substr, catalyst, 14.86))
+        third_r = Reazione(22, (complex, second_substr, tri_reaction.prodotti[0], catalyst, self.coeff_condensation/20))
 
         if symm:
             f_complex = '*' + first_substr + catalyst
@@ -291,13 +291,13 @@ class ChemGenerator:
             while s_complex in self.symm_specie_pool:
                 s_complex = '*' + s_complex
 
-            first_r = reazione(21, (first_substr, catalyst, f_complex, self.coeff_condensation / 10))
-            second_r = reazione(12, (f_complex, first_substr, catalyst, 14.86))
-            third_r = reazione(22, (f_complex, second_substr, tri_reaction.prodotti[0], catalyst, self.coeff_condensation / 20))
+            first_r = Reazione(21, (first_substr, catalyst, f_complex, self.coeff_condensation / 10))
+            second_r = Reazione(12, (f_complex, first_substr, catalyst, 14.86))
+            third_r = Reazione(22, (f_complex, second_substr, tri_reaction.prodotti[0], catalyst, self.coeff_condensation / 20))
 
-            symm_first_r = reazione(21, (second_substr, catalyst, s_complex, self.coeff_condensation / 10))
-            symm_second_r = reazione(12, (s_complex, second_substr, catalyst, 14.86))
-            symm_third_r = reazione(22, (s_complex, first_substr, tri_reaction.prodotti[0], catalyst, self.coeff_condensation / 20))
+            symm_first_r = Reazione(21, (second_substr, catalyst, s_complex, self.coeff_condensation / 10))
+            symm_second_r = Reazione(12, (s_complex, second_substr, catalyst, 14.86))
+            symm_third_r = Reazione(22, (s_complex, first_substr, tri_reaction.prodotti[0], catalyst, self.coeff_condensation / 20))
 
             return (f_complex, s_complex), (first_r, second_r, third_r, symm_first_r, symm_second_r, symm_third_r)
         else:

@@ -1,4 +1,4 @@
-class specie:
+class Specie:
 
     def __init__(self, nome, q, inter=None):
         """When inter = None it means that the species
@@ -14,7 +14,7 @@ class specie:
             }
 
             if len(inter) != len(self.inter.keys()):
-                raise AttributeError(f"Wrong format, the interaction must be {len(self.inter.keys())}")
+                raise AttributeError(f"Wrong format, the interactions must be {len(self.inter.keys())}")
 
             if isinstance(inter, list) or isinstance(inter, tuple):
                 for index, key in enumerate(self.inter.keys()):

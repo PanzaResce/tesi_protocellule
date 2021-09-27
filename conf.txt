@@ -1,2 +1,2 @@
 t0	tn	steps	n_divisioni	div_coeff	div_history	full_history	method		threshold	
-0	5000	10000	20		2		1		1		LSODA		0.0
+0	5000	10000	100		2		1		1		RK45		1e-20

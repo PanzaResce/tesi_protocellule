@@ -1,4 +1,4 @@
-class reazione:
+class Reazione:
 
     def __init__(self, tipo, reazione):
                 
