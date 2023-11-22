@@ -1,6 +1,8 @@
 # Protocell's Simulation
 Software to simulate the evolution of a protocell given its properties.
 The protocell's features can be specified in a file having the following structure:
+
+
 ![](file_struct.png "Title")
 
 ## How to Run
