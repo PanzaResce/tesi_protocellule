@@ -21,3 +21,5 @@ Also a generator for the chemsitry of a protocell is provided, it can be tuned b
 ```sh
 python chem_generator.py
 ```
+
+For further information refer to the file ```protocell_model_simulation.pdf```.
